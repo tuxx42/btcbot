@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Alan McIntyre
 
-import httplib2
+import http
 import json
 import decimal
 import re
@@ -75,6 +75,7 @@ def parseJSONResponse(response):
         return decimal.Decimal(var)
 
     try:
+        response = response.decode('utf-8')
         r = json.loads(response, parse_float=parse_decimal,
                        parse_int=parse_decimal)
     except Exception as e:
@@ -89,7 +90,7 @@ BODY_COOKIE_RE = re.compile(r'document\.cookie="a=([a-f0-9]{32});path=/;";')
 
 class BTCEConnection:
     def __init__(self, timeout=30):
-        self.conn = httplib.HTTPSConnection(btce_domain, timeout=timeout)
+        self.conn = http.client.HTTPSConnection(btce_domain, timeout=timeout)
         self.cookie = None
 
     def close(self):

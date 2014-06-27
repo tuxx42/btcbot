@@ -23,12 +23,13 @@ usage = {'exit': 'exit terminal',
          'kraken.get_balance': 'get balance from kraken',
          'kraken.get_depth': 'get depth from kraken',
          'kraken.add_order': 'add an order',
-         'btce.get_depth': 'get depth from btc-e'}
+         'btce.get_depth': 'get depth from btc-e',
+         'd': 'get depth comparison'}
 
 
 def get_depth(callback, callback_args, interval):
     while True:
-        r = callback(**callback_args)
+        callback(**callback_args)
         time.sleep(interval)
 
 
@@ -66,6 +67,17 @@ class Cli:
 
 class MethodDispather():
     #plot = plot.Plot()
+
+    def depth(self):
+        print('Kraken')
+        print('------')
+        print(kraken.kraken.current_depth[-1])
+
+        print('btce')
+        print('------')
+        print(btce.btce.current_depth[-1])
+
+
 
     def exit(self, params=None):
         print ('goodbye.')
@@ -141,6 +153,15 @@ def main():
                          args=[k.get_depth, {'pair': 'XXBTZEUR'}, 5])
     t.setDaemon(True)
     t.start()
+
+    # start btce thread
+    k = btce.btce('foobar')
+    k.decipher_key('btce.enc')
+    t = threading.Thread(target=get_depth,
+                         args=[k.get_depth, {'pair': 'XXBTZEUR'}, 5])
+    t.setDaemon(True)
+    t.start()
+
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)
 

@@ -69,7 +69,10 @@ def getDepth(pair, connection=None):
     common.validatePair(pair)
 
     if connection is None:
-        connection = common.BTCEConnection()
+        try:
+            connection = common.BTCEConnection()
+        except Exception as e:
+            print(e)
 
     depth = connection.makeJSONRequest("/api/2/%s/depth" % pair)
     if type(depth) is not dict:
