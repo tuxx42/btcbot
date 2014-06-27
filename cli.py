@@ -166,11 +166,6 @@ def handler(signum, frame):
 
 
 def main():
-    global kraken_api
-    kraken_api
-    global btce_api
-    btce_api
-
     start_depth_thread(kraken_api)
     start_depth_thread(btce_api)
 
