@@ -105,3 +105,14 @@ class Kraken:
             print ("an error occured %s" % s['error'])
             raise Exception
         print(s['result'])
+
+    def get_depth(self, **kwargs):
+        try:
+            s = self.k.query_public('Depth', kwargs)
+        except:
+            print ("unable to get trades")
+            raise Exception
+        if s['error']:
+            print ("an error occured %s" % s['error'])
+            raise Exception
+        print(s['result'])
