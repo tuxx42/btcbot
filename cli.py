@@ -33,6 +33,24 @@ def get_depth(callback, callback_args, interval):
         time.sleep(interval)
 
 
+def start_depth_thread(api):
+    t = threading.Thread(target=get_depth,
+                         args=[api.get_depth, {'pair': 'XXBTZEUR'}, 5])
+    t.setDaemon(True)
+    t.start()
+
+
+kraken_api = kraken.kraken('foobox')
+kraken_api.decipher_key('kraken.enc')
+
+btce_api = btce.btce()
+
+modules = {
+    'kraken': kraken_api,
+    'btce': btce_api,
+}
+
+
 class Cli:
     matches = []
     completions = {}
@@ -117,14 +135,13 @@ class MethodDispather():
             #res[d] = __import__("modules." + d, fromlist=["*"])
 
     def call(self, params=None):
-        module = self
         try:
             modulefunc = params[0].split('.')
             if len(modulefunc) > 1:
                 params[0] = params[0].split('.', 1)[1]
-                module = getattr(__import__(modulefunc[0]), modulefunc[0])('foobox')
-                module.decipher_key('kraken.enc')
-            methodToCall = getattr(module, params[0])
+                methodToCall = getattr(modules[modulefunc[0]], params[0])
+            else:
+                methodToCall = getattr(self, params[0])
         except IndexError as e:
             print(e)
             print ('unknown command')
@@ -135,7 +152,8 @@ class MethodDispather():
             return None
 
         param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
-        methodToCall(**param_dict)
+        r = methodToCall(**param_dict)
+        print(r)
 
     def __init__(self, values):
         self.values = values
@@ -147,20 +165,13 @@ def handler(signum, frame):
 
 
 def main():
-    k = kraken.kraken('foobox')
-    k.decipher_key('kraken.enc')
-    t = threading.Thread(target=get_depth,
-                         args=[k.get_depth, {'pair': 'XXBTZEUR'}, 5])
-    t.setDaemon(True)
-    t.start()
+    global kraken_api
+    kraken_api
+    global btce_api
+    btce_api
 
-    # start btce thread
-    k = btce.btce('foobar')
-    k.decipher_key('btce.enc')
-    t = threading.Thread(target=get_depth,
-                         args=[k.get_depth, {'pair': 'XXBTZEUR'}, 5])
-    t.setDaemon(True)
-    t.start()
+    start_depth_thread(kraken_api)
+    start_depth_thread(btce_api)
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)

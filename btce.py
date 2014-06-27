@@ -37,3 +37,4 @@ class btce(ExAPI):
         # [['427.96708', '0.117', 1403905459]]}}
         depth = {pair: {'bits': [bids], 'asks': [asks]}}
         btce.current_depth.append([depth, time.time()])
+        return depth
