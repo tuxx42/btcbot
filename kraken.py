@@ -117,4 +117,4 @@ class kraken(ExAPI):
         if s['error']:
             print ("an error occured %s" % s['error'])
             raise Exception
-        print(s['result'])
+        return s['result']

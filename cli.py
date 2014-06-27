@@ -10,6 +10,7 @@ import kraken
 import btce
 import time
 import threading
+import queue
 
 version = "0.1 beta"
 histfile = "/tmp/history"
@@ -26,9 +27,10 @@ usage = {'exit': 'exit terminal',
          'btce.get_depth': 'get depth from btc-e'}
 
 
-def get_depth(callback, callback_args, interval):
+def get_depth(callback, callback_args, interval, q):
     while True:
-        callback(**callback_args)
+        r = callback(**callback_args)
+        q.put(r)
         time.sleep(interval)
 
 
@@ -110,8 +112,8 @@ class MethodDispather():
             modulefunc = params[0].split('.')
             if len(modulefunc) > 1:
                 params[0] = params[0].split('.', 1)[1]
-                module = getattr(__import__(modulefunc[0]), modulefunc[0])
-                module.decipher_key('foobox')
+                module = getattr(__import__(modulefunc[0]), modulefunc[0])('foobox')
+                module.decipher_key('kraken.enc')
             methodToCall = getattr(module, params[0])
         except IndexError as e:
             print(e)
@@ -135,10 +137,11 @@ def handler(signum, frame):
 
 
 def main():
-    k = kraken.kraken('foobar')
+    k = kraken.kraken('foobox')
     k.decipher_key('kraken.enc')
+    q = queue.Queue()
     t = threading.Thread(target=get_depth,
-                         args=[k.get_depth, {'pair': 'XXBTZEUR', }, 5])
+                         args=[k.get_depth, {'pair': 'XXBTZEUR', }, 5, q])
     t.setDaemon(True)
     t.start()
     cli = Cli(histfile, usage.keys())
