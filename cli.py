@@ -94,7 +94,8 @@ class MethodDispather():
             print (params[0], 'unknown command')
             return None
 
-        methodToCall(params[1:])
+        param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
+        methodToCall(**param_dict)
 
     def __init__(self, values):
         self.values = values

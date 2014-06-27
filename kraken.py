@@ -95,13 +95,13 @@ class Kraken:
                                   })
         return s
 
-    def get_trades(self, req={}):
+    def get_trades(self, **kwargs):
         try:
-            s = self.k.query_public('Trades', req)
+            s = self.k.query_public('Trades', kwargs)
         except:
             print ("unable to get trades")
             raise Exception
         if s['error']:
             print ("an error occured %s" % s['error'])
             raise Exception
-        return s['result']
+        print(s['result'])
