@@ -5,11 +5,11 @@ from exapi import ExAPI
 #    pair = "btc_usd"
 
 
-class Btce(ExAPI):
+class btce(ExAPI):
     def __init__(self, passwd=None):
         pass
 
-    def decipher_key(self):
+    def decipher_key(self, blubb=None):
         pass
 
     def get_balance(self, dummy=None):

@@ -9,7 +9,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import MD5
 
 
-class Kraken(ExAPI):
+class kraken(ExAPI):
     PADDING = '{'
 
     def __init__(self, passwd=None):

@@ -102,15 +102,19 @@ class MethodDispather():
             modulefunc = params[0].split('.')
             if len(modulefunc) > 1:
                 params[0] = params[0].split('.', 1)[1]
-                if modulefunc[0] == "kraken":
-                    k = kraken.Kraken('foobox')
-                    k.decipher_key('kraken.enc')
-                    module = k
+                module = getattr(__import__(modulefunc[0]), modulefunc[0])
+                module.decipher_key('foobox')
+                #if modulefunc[0] == "kraken":
+                #    k = kraken.Kraken('foobox')
+                #    k.decipher_key('kraken.enc')
+                #    module = k
             methodToCall = getattr(module, params[0])
-        except IndexError:
+        except IndexError as e:
+            print(e)
             print ('unknown command')
             return None
-        except:
+        except Exception as e:
+            print(e)
             print (params[0], 'unknown command')
             return None
 
