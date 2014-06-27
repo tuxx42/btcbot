@@ -6,9 +6,19 @@ import signal
 import sys
 import os
 import kraken
+import plot
 
 version = "0.1 beta"
 histfile = "/tmp/history"
+usage = {'exit': 'exit terminal',
+         'help': 'show this message',
+         'version': 'show version',
+         'echo': 'echo messsage',
+         'showmods': 'show modules',
+         'load': 'load module',
+         'plot': 'plot data',
+         'kraken.get_balance': 'get balance from kraken',
+         'kraken.get_depth': 'get depth from kraken'}
 
 
 class Cli:
@@ -44,6 +54,8 @@ class Cli:
 
 
 class MethodDispather():
+    plot = plot.Plot()
+
     def exit(self, params=None):
         print ('goodbye.')
         sys.exit(1)
@@ -52,11 +64,16 @@ class MethodDispather():
         print (version)
 
     def help(self, params=None):
-        for val in self.values:
-            print (' ', val)
+        i = max(len(x) for x in usage.keys())
+        for val in sorted(usage.keys()):
+            s = ' %-' + str(i + 3) + 's:     %s'
+            print (s % (val, usage[val]))
 
     def echo(self, params=None):
         print (params)
+
+    def plot(self, params=None):
+        print ('plotting %s' % params)
 
     def load(self, params=None):
         name = "package." + params[0]
@@ -107,10 +124,7 @@ def handler(signum, frame):
 
 
 def main():
-    cli = Cli(histfile, ["exit", "help", "version",
-                         "echo", "showmods", "load",
-                         "plot"])
-    cli.append_values(['kraken.get_balance'])
+    cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)
 
     signal.signal(signal.SIGINT, handler)

@@ -1,9 +1,10 @@
 import modules.btceapi
+from exapi import ExAPI
 
 #    pair = "btc_usd"
 
 
-class Btce:
+class Btce(ExAPI):
     def __init__(self, passwd=None):
         pass
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from exapi import ExAPI
 import modules.krakenex
 import base64
 import getpass
@@ -8,7 +9,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import MD5
 
 
-class Kraken:
+class Kraken(ExAPI):
     PADDING = '{'
 
     def __init__(self, passwd=None):
