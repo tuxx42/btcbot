@@ -5,8 +5,9 @@ import readline
 import signal
 import sys
 import os
-import kraken
 import plot
+import kraken
+import btce
 
 version = "0.1 beta"
 histfile = "/tmp/history"
@@ -19,7 +20,8 @@ usage = {'exit': 'exit terminal',
          'plot': 'plot data',
          'kraken.get_balance': 'get balance from kraken',
          'kraken.get_depth': 'get depth from kraken',
-         'kraken.add_order': 'add an order'}
+         'kraken.add_order': 'add an order',
+         'btce.get_depth': 'get depth from btc-e'}
 
 
 class Cli:
@@ -67,7 +69,7 @@ class MethodDispather():
     def help(self, params=None):
         i = max(len(x) for x in usage.keys())
         for val in sorted(usage.keys()):
-            s = ' %-' + str(i + 3) + 's:     %s'
+            s = '   %-' + str(i + 3) + 's:     %s'
             print (s % (val, usage[val]))
 
     def echo(self, params=None):

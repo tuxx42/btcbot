@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import modules.btceapi
 from exapi import ExAPI
 
