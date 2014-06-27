@@ -21,10 +21,11 @@ usage = {'exit': 'exit terminal',
          'load': 'load module',
          'plot': 'plot data',
          'kraken.get_balance': 'get balance from kraken',
-         'kraken.get_depth': 'get depth from kraken',
+         'kraken.print_depth': 'get depth from kraken',
          'kraken.add_order': 'add an order',
+         'd': 'get depth comparison',
          'btce.get_depth': 'get depth from btc-e',
-         'd': 'get depth comparison'}
+         'btce.print_depth': 'get depth from btc-e'}
 
 
 def get_depth(callback, callback_args, interval):

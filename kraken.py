@@ -97,7 +97,7 @@ class kraken(ExAPI):
                                   'volume': vol,
                                   })
         print(s)
-#        return s
+        return s
 
     def get_trades(self, **kwargs):
         try:
@@ -121,3 +121,6 @@ class kraken(ExAPI):
             raise Exception
         kraken.current_depth.append([s['result'], time.time()])
         return s['result']
+
+    def print_depth(self, **kwargs):
+        print(self.depth)
