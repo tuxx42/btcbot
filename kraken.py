@@ -4,6 +4,7 @@ import modules.krakenex
 import base64
 import getpass
 import io
+import time
 
 from Crypto.Cipher import AES
 from Crypto.Hash import MD5
@@ -11,6 +12,7 @@ from Crypto.Hash import MD5
 
 class kraken(ExAPI):
     PADDING = '{'
+    current_depth = []
 
     def __init__(self, passwd=None):
         try:
@@ -117,4 +119,5 @@ class kraken(ExAPI):
         if s['error']:
             print ("an error occured %s" % s['error'])
             raise Exception
+        kraken.current_depth.append([s['result'], time.time()])
         return s['result']

@@ -10,7 +10,6 @@ import kraken
 import btce
 import time
 import threading
-import queue
 
 version = "0.1 beta"
 histfile = "/tmp/history"
@@ -27,10 +26,9 @@ usage = {'exit': 'exit terminal',
          'btce.get_depth': 'get depth from btc-e'}
 
 
-def get_depth(callback, callback_args, interval, q):
+def get_depth(callback, callback_args, interval):
     while True:
         r = callback(**callback_args)
-        q.put(r)
         time.sleep(interval)
 
 
@@ -139,9 +137,8 @@ def handler(signum, frame):
 def main():
     k = kraken.kraken('foobox')
     k.decipher_key('kraken.enc')
-    q = queue.Queue()
     t = threading.Thread(target=get_depth,
-                         args=[k.get_depth, {'pair': 'XXBTZEUR', }, 5, q])
+                         args=[k.get_depth, {'pair': 'XXBTZEUR'}, 5])
     t.setDaemon(True)
     t.start()
     cli = Cli(histfile, usage.keys())
@@ -150,7 +147,7 @@ def main():
     signal.signal(signal.SIGINT, handler)
 
     while 1:
-        a = input('bot> ')
+        a = input('> ')
         try:
             params = a.split(' ')
             while '' in params:
