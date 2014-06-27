@@ -85,7 +85,6 @@ class kraken(ExAPI):
             for cur in s['result']:
                 if s['result'][cur]:
                     balance[cur] = float(s['result'][cur])
-            print (balance)
             return balance
 
     def add_order(self, order, price, vol, ordertype='limit'):
@@ -96,7 +95,6 @@ class kraken(ExAPI):
                                   'price': price,
                                   'volume': vol,
                                   })
-        print(s)
         return s
 
     def get_trades(self, **kwargs):
@@ -123,4 +121,4 @@ class kraken(ExAPI):
         return s['result']
 
     def print_depth(self, **kwargs):
-        print(self.depth)
+        return self.current_depth

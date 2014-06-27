@@ -12,6 +12,7 @@ import time
 import threading
 
 version = "0.1 beta"
+prompt = "bot > "
 histfile = "/tmp/history"
 usage = {'exit': 'exit terminal',
          'help': 'show this message',
@@ -21,6 +22,7 @@ usage = {'exit': 'exit terminal',
          'load': 'load module',
          'plot': 'plot data',
          'kraken.get_balance': 'get balance from kraken',
+         'kraken.get_depth': 'get depth from kraken',
          'kraken.print_depth': 'get depth from kraken',
          'kraken.add_order': 'add an order',
          'd': 'get depth comparison',
@@ -36,7 +38,7 @@ def get_depth(callback, callback_args, interval):
 
 def start_depth_thread(api):
     t = threading.Thread(target=get_depth,
-                         args=[api.get_depth, {'pair': 'XXBTZEUR'}, 5])
+                         args=[api.get_depth, {'pair': 'XXBTZEUR'}, 1])
     t.setDaemon(True)
     t.start()
 
@@ -154,7 +156,8 @@ class MethodDispather():
 
         param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
         r = methodToCall(**param_dict)
-        print(r)
+        if r:
+            print(r)
 
     def __init__(self, values):
         self.values = values
@@ -175,7 +178,7 @@ def main():
     signal.signal(signal.SIGINT, handler)
 
     while 1:
-        a = input('> ')
+        a = input(prompt)
         try:
             params = a.split(' ')
             while '' in params:
