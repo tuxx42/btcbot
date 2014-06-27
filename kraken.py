@@ -86,15 +86,16 @@ class Kraken(ExAPI):
             print (balance)
             return balance
 
-    def add_order(self, order, price, vol):
+    def add_order(self, order, price, vol, ordertype='limit'):
         s = self.k.query_private('AddOrder',
                                  {'pair': 'XXBTZEUR',
                                   'type': order,
-                                  'ordertype': 'limit',
+                                  'ordertype': ordertype,
                                   'price': price,
                                   'volume': vol,
                                   })
-        return s
+        print(s)
+#        return s
 
     def get_trades(self, **kwargs):
         try:

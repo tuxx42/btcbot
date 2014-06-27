@@ -18,7 +18,8 @@ usage = {'exit': 'exit terminal',
          'load': 'load module',
          'plot': 'plot data',
          'kraken.get_balance': 'get balance from kraken',
-         'kraken.get_depth': 'get depth from kraken'}
+         'kraken.get_depth': 'get depth from kraken',
+         'kraken.add_order': 'add an order'}
 
 
 class Cli:
@@ -130,7 +131,7 @@ def main():
     signal.signal(signal.SIGINT, handler)
 
     while 1:
-        a = input('> ')
+        a = input('bot> ')
         try:
             params = a.split(' ')
             while '' in params:
