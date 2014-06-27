@@ -6,8 +6,8 @@ import hmac
 import warnings
 from datetime import datetime
 
-from btceapi import common
-from btceapi import keyhandler
+from modules.btceapi import common
+from modules.btceapi import keyhandler
 
 
 class InvalidNonceException(Exception):

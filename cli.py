@@ -5,7 +5,7 @@ import readline
 import signal
 import sys
 import os
-import plot
+#import plot
 import kraken
 import btce
 
@@ -57,7 +57,7 @@ class Cli:
 
 
 class MethodDispather():
-    plot = plot.Plot()
+    #plot = plot.Plot()
 
     def exit(self, params=None):
         print ('goodbye.')

@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Alan McIntyre
 
-import httplib
+import httplib2
 import json
 import decimal
 import re
