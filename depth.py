@@ -15,6 +15,13 @@ class trade(object):
             self.timestamp = None
         self.typ = typ
 
+    def __eq__(self, other):
+        # TODO
+        return self.value == other.value
+
+    def __lt__(self, other):
+        return self.value < other.value
+
     def __repr__(self):
         r = self.typ and 'ASK: ' or 'BID: '
         r += 'value %f' % self.value
@@ -26,11 +33,15 @@ class trade(object):
 
 class depth(object):
     def __init__(self, asks=[], bids=[]):
-        self.asks = map(lambda t: trade(*t, typ=trade.ASK), asks)
-        self.bids = map(lambda t: trade(*t, typ=trade.BID), bids)
+        self.asks = sorted(map(lambda t: trade(*t, typ=trade.ASK), asks))
+        self.bids = sorted(map(lambda t: trade(*t, typ=trade.BID), bids))
 
     def diff(self, other):
         pass
+
+    #def spread(self, d2):
+    #    ask_spread = 0.00
+    #    bid_spread = 0.00
 
     def __repr__(self):
         r = ''
