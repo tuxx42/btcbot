@@ -110,7 +110,7 @@ class MethodDispather():
         try:
             s = depth.spread(modules[api1].current_depth[-1][0],
                              modules[api2].current_depth[-1][0])
-            print('Spread: %s' % s)
+            print('Marketspread: %s' % s)
         except Exception as e:
             print (e)
             pass

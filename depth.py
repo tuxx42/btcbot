@@ -32,8 +32,8 @@ class trade(object):
 
     @staticmethod
     def diff(t1, t2):
-        print(t1)
-        print(t2)
+        #print(t1)
+        #print(t2)
         return t1.value - t2.value
 
 
@@ -56,10 +56,12 @@ class depth(object):
         return self.bids[-1]
 
     def get_bids_bigger(self, edge):
-        return filter(lambda t: t.value > edge, self.bids)
+        return list(filter(lambda t: t.value > edge.value, self.bids))
+        #return list(filter(lambda t: t.value > edge, self.bids))
 
     def get_asks_lower(self, edge):
-        return filter(lambda t: t.value < edge, self.asks)
+        return list(filter(lambda t: t.value > edge.value, self.bids))
+        #return list(filter(lambda t: t.value < edge, self.asks))
 
     @staticmethod
     def spread(d1, d2):
@@ -71,9 +73,12 @@ class depth(object):
         r['12'] = trade.diff(maxa1, minb2)
         r['21'] = trade.diff(maxa2, minb1)
         if r['12'] > 0:
-            r['12_open'] = d1.get_bids_bigger(minb2)
+            r['open'] = d1.get_bids_bigger(minb2)
         if r['21'] > 0:
-            r['21_open'] = d2.get_bids_bigger(minb1)
+            r['open'] = d2.get_bids_bigger(minb1)
+
+        if 'open' in r.keys():
+            r['volume'] = sum(map(lambda t: t.volume, r['open']))
         return r
         #n = min(len(d1.asks), len(d2.asks))
         #a1 = sum(a.value * a.volume for a in d1.asks[0:n])
