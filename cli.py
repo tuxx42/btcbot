@@ -197,7 +197,8 @@ def main():
                 params.remove('')
 
             methods.call(params)
-        except:
+        except Exception as e:
+            print(e)
             continue
 
 

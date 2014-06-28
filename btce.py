@@ -36,13 +36,10 @@ class btce(ExAPI):
         pass
 
     def get_min_bid(self):
-        try:
-            return btce.current_depth[-1][0].get_min_bid()
-        except Exception as e:
-            print(e)
+        return btce.current_depth[-1][0].get_min_bid()
 
     def get_max_ask(self):
-        return btce.current_depth[-1][0].get_max_bid()
+        return btce.current_depth[-1][0].get_max_ask()
 
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
