@@ -10,6 +10,7 @@ import kraken
 import btce
 import time
 import threading
+from depth import depth
 
 version = "0.1 beta"
 prompt = "bot > "
@@ -26,6 +27,7 @@ usage = {'exit': 'exit terminal',
          'kraken.print_depth': 'get depth from kraken',
          'kraken.add_order': 'add an order',
          'd': 'get depth comparison',
+         'spread': 'get spread e.g: bot> spread api1=btce api2=kraken',
          'btce.get_depth': 'get depth from btc-e',
          'btce.print_depth': 'get depth from btc-e'}
 
@@ -89,16 +91,24 @@ class Cli:
 class MethodDispather():
     #plot = plot.Plot()
 
-    def depth(self):
-        print('Kraken')
-        print('------')
-        print(kraken.kraken.current_depth[-1])
+#    def depth(self):
+#        print('Kraken')
+#        print('------')
+#        print(kraken.kraken.current_depth[-1])
+#
+#        print('btce')
+#        print('------')
+#        print(btce.btce.current_depth[-1])
 
-        print('btce')
-        print('------')
-        print(btce.btce.current_depth[-1])
-
-
+    def spread(self, **kwargs):
+        api1 = kwargs['api1']
+        api2 = kwargs['api2']
+        try:
+            s = depth.spread(modules[api1].current_depth[-1][0],
+                             modules[api2].current_depth[-1][0])
+            print('Spread: %f' % s)
+        except Exception as e:
+            pass
 
     def exit(self, params=None):
         print ('goodbye.')

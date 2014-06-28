@@ -6,9 +6,9 @@ class trade(object):
     BID = 0
     ASK = 1
 
-    def __init__(self, value=0.0, amount=0.0, timestamp=0, typ=BID):
+    def __init__(self, value=0.0, volume=0.0, timestamp=0, typ=BID):
         self.value = float(value)
-        self.amount = float(amount)
+        self.volume = float(volume)
         if timestamp:
             self.timestamp = datetime.fromtimestamp(float(timestamp))
         else:
@@ -25,7 +25,7 @@ class trade(object):
     def __repr__(self):
         r = self.typ and 'ASK: ' or 'BID: '
         r += 'value %f' % self.value
-        r += ', amount: %f' % self.amount
+        r += ', volume: %f' % self.volume
         if self.timestamp:
             r += ', time: %s' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         return r
@@ -39,9 +39,18 @@ class depth(object):
     def diff(self, other):
         pass
 
-    #def spread(self, d2):
-    #    ask_spread = 0.00
-    #    bid_spread = 0.00
+    def total_volume(self, n=-1):
+        return {'ask': sum([a.volume for a in self.asks[0:n]]),
+                'bid': sum([a.volume for a in self.asks[0:n]])}
+
+    @staticmethod
+    def spread(d1, d2):
+        n = min(len(d1.asks), len(d2.asks))
+        a1 = sum(a.value * a.volume for a in d1.asks[0:n])
+        a2 = sum(a.value * a.volume for a in d2.asks[0:n])
+        ask_spread = a1 / d1.total_volume(n)['ask'] - \
+            a2 / d2.total_volume(n)['ask']
+        return ask_spread
 
     def __repr__(self):
         r = ''
