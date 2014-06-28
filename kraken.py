@@ -83,9 +83,8 @@ class kraken(ExAPI):
             raise Exception
         else:
             balance = {}
-            for cur in s['result']:
-                if s['result'][cur]:
-                    balance[cur] = float(s['result'][cur])
+            balance['btc'] = float(s['result']['XXBT'])
+            balance['eur'] = float(s['result']['ZEUR'])
             return balance
 
     def add_order(self, order, price, vol, ordertype='limit'):

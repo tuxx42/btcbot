@@ -19,9 +19,14 @@ class btce(ExAPI):
         pass
 
     def get_balance(self, dummy=None):
-        print ('reached')
-        print (modules.btceapi.getTradeFee('btc_eur', self.connection))
-        print (modules.btceapi.getInfo(self.connection))
+        balance = {}
+        try:
+            result = self.api.getInfo()['return']['funds']
+            for s in ['btc', 'eur']:
+                balance[s] = result[s]
+            return balance
+        except Exception as e:
+            print(e)
         pass
 
     def add_order(self, order, price, vol):
