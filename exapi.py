@@ -14,5 +14,11 @@ class ExAPI():
     def get_trades(self, **kwargs):
         pass
 
+    def get_min_bid(self):
+        return self.current_depth[-1][0].get_min_bid()
+
+    def get_max_ask(self):
+        return self.current_depth[-1][0].get_max_ask()
+
     def get_depth(self, **kwargs):
         pass

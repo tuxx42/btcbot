@@ -35,12 +35,6 @@ class btce(ExAPI):
     def get_trades(self, **kwargs):
         pass
 
-    def get_min_bid(self):
-        return btce.current_depth[-1][0].get_min_bid()
-
-    def get_max_ask(self):
-        return btce.current_depth[-1][0].get_max_ask()
-
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         try:
