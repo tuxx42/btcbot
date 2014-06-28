@@ -33,10 +33,9 @@ class btce(ExAPI):
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         try:
-            asks, bids = self.api.get_param(kwargs['pair'], 'Depth')
-            print(asks, bids)
+            s = self.api.get_param(kwargs['pair'], 'depth')
         except Exception as e:
             print(e)
-        #d = depth(asks=asks, bids=bids)
-        #btce.current_depth.append([d, time.time()])
-        #return d
+        d = depth(**s)
+        btce.current_depth.append([d, time.time()])
+        return d
