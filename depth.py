@@ -17,10 +17,10 @@ class trade(object):
 
     def __repr__(self):
         r = self.typ and 'ASK: ' or 'BID: '
-        r += 'value %f, ' % self.value
-        r += 'amount: %f, ' % self.amount
+        r += 'value %f' % self.value
+        r += ', amount: %f' % self.amount
         if self.timestamp:
-            r += 'time: %s' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            r += ', time: %s' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         return r
 
 

@@ -119,7 +119,7 @@ class kraken(ExAPI):
             print ("an error occured %s" % s['error'])
             raise Exception
 
-        d = [depth(**v) for k, v in s['result'].items()]
+        d = [depth(**v) for k, v in s['result'].items()][0]
         kraken.current_depth.append([d, time.time()])
         return d
 
