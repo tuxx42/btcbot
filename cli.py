@@ -8,6 +8,7 @@ import os
 #import plot
 import kraken
 import btce
+import exsimu
 import time
 import threading
 from depth import depth
@@ -50,10 +51,12 @@ kraken_api = kraken.kraken('foobox')
 kraken_api.decipher_key('kraken.enc')
 
 btce_api = btce.btce()
+exsimu_api = exsimu.exsimu()
 
 modules = {
     'kraken': kraken_api,
     'btce': btce_api,
+    'exsimu': exsimu_api,
 }
 
 
