@@ -14,7 +14,7 @@ import hmac
 import time
 
 
-class btceapi:
+class API:
     __api_key = ''
     __api_secret = ''
     __nonce_v = 1

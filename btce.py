@@ -11,12 +11,17 @@ class btce(ExAPI):
     current_depth = []
 
     def __init__(self, passwd=None):
-        pass
+        self.api = modules.btceapi.API(
+            'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX',
+            'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
     def decipher_key(self, blubb=None):
         pass
 
     def get_balance(self, dummy=None):
+        print ('reached')
+        print (modules.btceapi.getTradeFee('btc_eur', self.connection))
+        print (modules.btceapi.getInfo(self.connection))
         pass
 
     def add_order(self, order, price, vol):
@@ -28,9 +33,10 @@ class btce(ExAPI):
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         try:
-            asks, bids = modules.btceapi.getDepth(kwargs['pair'])
+            asks, bids = self.api.get_param(kwargs['pair'], 'Depth')
+            print(asks, bids)
         except Exception as e:
             print(e)
-        d = depth(asks=asks, bids=bids)
-        btce.current_depth.append([d, time.time()])
-        return d
+        #d = depth(asks=asks, bids=bids)
+        #btce.current_depth.append([d, time.time()])
+        #return d
