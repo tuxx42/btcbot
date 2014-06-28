@@ -34,9 +34,6 @@ class btce(ExAPI):
             asks, bids = modules.btceapi.getDepth(pair)
         except Exception as e:
             print(e)
-        # {'XXBTZEUR': {'bids': [['427.35800', '0.100', 1403904879]], 'asks':
-        # [['427.96708', '0.117', 1403905459]]}}
-        #depth = {pair: {'bits': [bids], 'asks': [asks]}}
         d = depth(asks=asks, bids=bids)
         btce.current_depth.append([d, time.time()])
         return d

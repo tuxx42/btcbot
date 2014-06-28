@@ -169,8 +169,8 @@ def handler(signum, frame):
 
 
 def main():
-    #start_depth_thread(kraken_api)
-    #start_depth_thread(btce_api)
+    start_depth_thread(kraken_api)
+    start_depth_thread(btce_api)
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)
