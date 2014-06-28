@@ -5,6 +5,7 @@ import base64
 import getpass
 import io
 import time
+from depth import depth
 
 from Crypto.Cipher import AES
 from Crypto.Hash import MD5
@@ -117,8 +118,10 @@ class kraken(ExAPI):
         if s['error']:
             print ("an error occured %s" % s['error'])
             raise Exception
-        kraken.current_depth.append([s['result'], time.time()])
-        return s['result']
+
+        d = [depth(**v) for k, v in s['result'].items()]
+        kraken.current_depth.append([d, time.time()])
+        return d
 
     def print_depth(self, **kwargs):
         return self.current_depth
