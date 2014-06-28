@@ -9,6 +9,7 @@ from depth import depth
 
 class btce(ExAPI):
     current_depth = []
+
     def __init__(self, passwd=None):
         pass
 
@@ -25,13 +26,9 @@ class btce(ExAPI):
         pass
 
     def get_depth(self, **kwargs):
-        pair = "btc_eur"
+        kwargs.setdefault('pair', 'btc_eur')
         try:
-            pair = kwargs['pairs']
-        except KeyError:
-            pass
-        try:
-            asks, bids = modules.btceapi.getDepth(pair)
+            asks, bids = modules.btceapi.getDepth(kwargs['pair'])
         except Exception as e:
             print(e)
         d = depth(asks=asks, bids=bids)

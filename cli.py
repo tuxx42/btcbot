@@ -40,7 +40,7 @@ def get_depth(callback, callback_args, interval):
 
 def start_depth_thread(api):
     t = threading.Thread(target=get_depth,
-                         args=[api.get_depth, {'pair': 'XXBTZEUR'}, 1])
+                         args=[api.get_depth, {}, 1])
     t.setDaemon(True)
     t.start()
 
@@ -108,6 +108,7 @@ class MethodDispather():
                              modules[api2].current_depth[-1][0])
             print('Spread: %f' % s)
         except Exception as e:
+            print (e)
             pass
 
     def exit(self, params=None):

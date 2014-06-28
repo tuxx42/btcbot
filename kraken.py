@@ -110,6 +110,7 @@ class kraken(ExAPI):
         print(s['result'])
 
     def get_depth(self, **kwargs):
+        kwargs.setdefault('pair', 'XXBTZEUR')
         try:
             s = self.k.query_public('Depth', kwargs)
         except:
