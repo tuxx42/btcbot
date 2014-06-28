@@ -28,6 +28,7 @@ usage = {'exit': 'exit terminal',
          'kraken.add_order': 'add an order',
          'd': 'get depth comparison',
          'spread': 'get spread e.g: bot> spread api1=btce api2=kraken',
+         'btce.get_balance': 'get balance from btc-e',
          'btce.get_depth': 'get depth from btc-e',
          'btce.print_depth': 'get depth from btc-e'}
 

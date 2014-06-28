@@ -43,6 +43,12 @@ class depth(object):
         return {'ask': sum([a.volume for a in self.asks[0:n]]),
                 'bid': sum([a.volume for a in self.asks[0:n]])}
 
+    def get_min_bid(self):
+        return self.bids[0]
+
+    def get_max_ask(self):
+        return self.bids[-1]
+
     @staticmethod
     def spread(d1, d2):
         n = min(len(d1.asks), len(d2.asks))
