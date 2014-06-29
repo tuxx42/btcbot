@@ -59,18 +59,12 @@ class depth(object):
         return self.bids[-1]
 
     def get_bids_higher(self, edge):
-        print (edge)
         return list(filter(lambda t: t.value > edge.value,
                            self.bids))
 
     def get_asks_lower(self, edge):
         return list(filter(lambda t: t.value < edge.value,
                            self.asks))
-
-#    @staticmethod
-#    def spread(api1=None, api2=None):
-#        depth1 = api1.get_depth()
-#        depth2 = api2.get_depth()
 
     @staticmethod
     def spread(**kwargs):
