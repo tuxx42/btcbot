@@ -8,11 +8,11 @@ from depth import depth
 
 
 class exsimu(ExAPI):
-    curdepth = {}
 
     def __init__(self, data, name='exsimu'):
         self.api = modules.exsimuapi.API(data)
         self.name = name
+        self.curdepth = {}
 
     def get_fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')

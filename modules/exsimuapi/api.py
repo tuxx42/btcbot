@@ -13,7 +13,7 @@ import hashlib
 import hmac
 import time
 import random
-from modules.exsimuapi import datasets
+#from modules.exsimuapi import datasets
 
 
 class API:
@@ -55,9 +55,11 @@ class API:
         pass
 
     def get_depth(self, pair, randomize=False):
+        fname = 'modules/exsimuapi/' + self.__data_set + '.dat'
+        with open(fname) as f:
+            data = json.loads(f.read())
         if randomize:
                 random.seed(time.time())
-        data = datasets.data_set[self.__data_set]
         if randomize:
             for s in ['asks', 'bids']:
                 for i in range(len(data[s])):
