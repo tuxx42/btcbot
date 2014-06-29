@@ -8,15 +8,18 @@ from depth import depth
 
 
 class exsimu(ExAPI):
-    current_depth = []
+    depth = {}
+    name = 'exsimu'
 
     def __init__(self, passwd=None):
-        self.api = modules.exsimuapi.API(
-            'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX',
-            'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+        self.api = modules.exsimuapi.API()
 
-    def decipher_key(self, blubb=None):
-        pass
+    def get_fees(self, **kwargs):
+        kwargs.setdefault('pair', 'btc_eur')
+        if kwargs['pair'] == 'btc_eur':
+            return 0.2
+        else:
+            return Exception('pair?')
 
     def get_balance(self, dummy=None):
         balance = {}
@@ -42,5 +45,5 @@ class exsimu(ExAPI):
         except Exception as e:
             print(e)
         d = depth(**s)
-        exsimu.current_depth.append([d, time.time()])
+        exsimu.depth[kwargs['pair']] = [d, time.time()]
         return d

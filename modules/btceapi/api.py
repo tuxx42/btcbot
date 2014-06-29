@@ -19,6 +19,7 @@ class API:
     __api_secret = ''
     __nonce_v = 1
     __wait_for_nonce = False
+    name = 'btc-e'
 
     def __init__(self, api_key, api_secret, wait_for_nonce=False):
         self.__api_key = api_key

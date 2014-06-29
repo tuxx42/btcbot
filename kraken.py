@@ -13,7 +13,12 @@ from Crypto.Hash import MD5
 
 class kraken(ExAPI):
     PADDING = '{'
-    current_depth = []
+    depth = {}
+    pairs = {}
+    name = 'kraken'
+    pairs['btc_eur'] = 'XXBTZEUR'
+    pairs['btc'] = 'XXBT'
+    pairs['eur'] = 'ZEUR'
 
     def __init__(self, passwd=None):
         try:
@@ -75,21 +80,32 @@ class kraken(ExAPI):
         self.k.secret = s.readline().strip()
         s.close()
 
+    def get_fees(self, **kwargs):
+        kwargs.setdefault('pair', 'btc_eur')
+        fees = {}
+        fees['btc_eur'] = 0.2
+        fees['btc_usd'] = 0.2
+        try:
+            return fees[kwargs['pair']]
+        except KeyError:
+            raise Exception('invalid pair')
+
     def get_balance(self, dummy=None):
         s = self.k.query_private('Balance')
         if s['error']:
             print ("an error occured while getting the account balance: %s" %
                    s['error'])
-            raise Exception
+            raise Exception('could not query')
         else:
             balance = {}
             balance['btc'] = float(s['result']['XXBT'])
             balance['eur'] = float(s['result']['ZEUR'])
             return balance
 
-    def add_order(self, order, price, vol, ordertype='limit'):
+    def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
+        getpair = self.pairs[pair]
         s = self.k.query_private('AddOrder',
-                                 {'pair': 'XXBTZEUR',
+                                 {'pair': getpair,
                                   'type': order,
                                   'ordertype': ordertype,
                                   'price': price,
@@ -109,9 +125,10 @@ class kraken(ExAPI):
         print(s['result'])
 
     def get_depth(self, **kwargs):
-        kwargs.setdefault('pair', 'XXBTZEUR')
+        kwargs.setdefault('pair', 'btc_eur')
         try:
-            s = self.k.query_public('Depth', kwargs)
+            s = self.k.query_public('Depth',
+                                    {'pair': self.pairs[kwargs['pair']]})
         except:
             print ("unable to get trades")
             raise Exception
@@ -120,8 +137,9 @@ class kraken(ExAPI):
             raise Exception
 
         d = [depth(**v) for k, v in s['result'].items()][0]
-        kraken.current_depth.append([d, time.time()])
+        kraken.depth[kwargs['pair']] = [d, time.time()]
         return d
 
     def print_depth(self, **kwargs):
-        return self.current_depth
+        kwargs.setdefault('pair', 'btc_eur')
+        return self.depth[kwargs['pair']]

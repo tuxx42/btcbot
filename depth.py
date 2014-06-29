@@ -24,10 +24,10 @@ class trade(object):
 
     def __repr__(self):
         r = self.typ and 'ASK: ' or 'BID: '
-        r += 'value %f' % self.value
-        r += ', volume: %f' % self.volume
-        if self.timestamp:
-            r += ', time: %s' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        r += 'price(%f)' % self.value
+        r += ', vol(%f)' % self.volume
+#        if self.timestamp:
+#            r += ', time(%s)' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         return r
 
     @staticmethod
@@ -56,37 +56,72 @@ class depth(object):
         return self.bids[-1]
 
     def get_bids_bigger(self, edge):
+        print (edge)
         return list(filter(lambda t: t.value > edge.value, self.bids))
-        #return list(filter(lambda t: t.value > edge, self.bids))
 
     def get_asks_lower(self, edge):
         return list(filter(lambda t: t.value > edge.value, self.bids))
-        #return list(filter(lambda t: t.value < edge, self.asks))
 
     @staticmethod
-    def spread(d1, d2):
-        minb1 = d1.get_min_ask()
-        minb2 = d2.get_min_ask()
-        maxa1 = d1.get_max_bid()
-        maxa2 = d2.get_max_bid()
+    def spread(**kwargs):
+        depth = {}
+        vals = {}
+        depth['api1'] = kwargs['api1'].depth[kwargs['pair']][0]
+        depth['api2'] = kwargs['api2'].depth[kwargs['pair']][0]
+
+        vals['api1'] = {'min_ask': depth['api1'].get_min_ask(),
+                        'max_bid': depth['api1'].get_max_bid()}
+        vals['api2'] = {'min_ask': depth['api2'].get_min_ask(),
+                        'max_bid': depth['api2'].get_max_bid()}
+
         r = {}
-        r['12'] = trade.diff(maxa1, minb2)
-        r['21'] = trade.diff(maxa2, minb1)
-        if r['12'] > 0:
-            r['open'] = d1.get_bids_bigger(minb2)
-        if r['21'] > 0:
-            r['open'] = d2.get_bids_bigger(minb1)
+        diff = trade.diff(vals['api1']['max_bid'], vals['api2']['min_ask'])
+        if diff > 0:
+            r['buy'] = kwargs['api1']
+            r['sell'] = kwargs['api2']
+            buys = depth['api1'].get_bids_bigger(vals['api2']['min_ask'])
+            sells = depth['api2'].get_asks_lower(vals['api1']['max_bid'])
+            print(buys)
+            print(sells)
 
-        if 'open' in r.keys():
-            r['volume'] = sum(map(lambda t: t.volume, r['open']))
-        return r
-        #n = min(len(d1.asks), len(d2.asks))
-        #a1 = sum(a.value * a.volume for a in d1.asks[0:n])
-        #a2 = sum(a.value * a.volume for a in d2.asks[0:n])
-        #ask_spread = a1 / d1.total_volume(n)['ask'] - \
-        #    a2 / d2.total_volume(n)['ask']
-        #return ask_spread
+        diff = trade.diff(vals['api2']['max_bid'], vals['api1']['min_ask'])
+        if diff > 0:
+            r['buy'] = kwargs['api2']
+            r['sell'] = kwargs['api1']
+            buys = depth['api2'].get_bids_bigger(vals['api1']['min_ask'])
+            sells = depth['api1'].get_bids_bigger(vals['api2']['max_bid'])
+            print(buys)
+            print(sells)
 
+        return (r)
+
+#    def spread(**kwargs):
+#        try:
+#            d1 = kwargs['api1'].depth[kwargs['pair']][0]
+#            d2 = kwargs['api2'].depth[kwargs['pair']][0]
+#        except:
+#            raise Exception('no depth for \'%s(%s)\'' %
+#                            (kwargs['api1'].name, kwargs['pair']))
+#        minb1 = d1.get_min_ask()
+#        minb2 = d2.get_min_ask()
+#        maxa1 = d1.get_max_bid()
+#        maxa2 = d2.get_max_bid()
+#
+#        r = {}
+#        if trade.diff(maxa1, minb2) > 0:
+#            r['buy'] = kwargs['api1']
+#            r['sell'] = kwargs['api2']
+#            r['profit'] = trade.diff(maxa1, minb2)
+#            r['open'] = d1.get_bids_bigger(minb2)
+#        if trade.diff(maxa2, minb1) > 0:
+#            r['buy'] = kwargs['api2']
+#            r['sell'] = kwargs['api1']
+#            r['profit'] = trade.diff(maxa2, minb1)
+#            r['open'] = d2.get_bids_bigger(minb1)
+#
+#        if 'open' in r.keys():
+#            r['volume'] = sum(map(lambda t: t.volume, r['open']))
+#        return r
     def __repr__(self):
         r = ''
         for ask in self.asks:

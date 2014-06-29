@@ -8,15 +8,23 @@ from depth import depth
 
 
 class btce(ExAPI):
-    current_depth = []
+    depth = {}
+    name = 'btce'
 
     def __init__(self, passwd=None):
         self.api = modules.btceapi.API(
             'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX',
             'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
-    def decipher_key(self, blubb=None):
-        pass
+    def get_fees(self, **kwargs):
+        return 0.2
+        kwargs.setdefault('pair', 'btc_eur')
+        s = self.api.get_param(kwargs['pair'], 'fee')
+        try:
+            fee = s['trade']
+            return fee
+        except:
+            return Exception('unable to get pair?')
 
     def get_balance(self, dummy=None):
         balance = {}
@@ -27,7 +35,6 @@ class btce(ExAPI):
             return balance
         except Exception as e:
             print(e)
-        pass
 
     def add_order(self, order, price, vol):
         pass
@@ -42,5 +49,5 @@ class btce(ExAPI):
         except Exception as e:
             print(e)
         d = depth(**s)
-        btce.current_depth.append([d, time.time()])
+        btce.depth[kwargs['pair']] = [d, time.time()]
         return d

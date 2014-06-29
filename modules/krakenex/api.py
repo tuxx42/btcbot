@@ -38,6 +38,7 @@ class API:
     query_private
 
     """
+    name = 'kraken'
     def __init__(self, key = '', secret = '', conn = None):
         """Create an object with authentication information.
 

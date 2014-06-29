@@ -22,10 +22,8 @@ class API:
     __nonce_v = 1
     __wait_for_nonce = False
 
-    def __init__(self, api_key, api_secret, wait_for_nonce=False):
-        self.__api_key = api_key
-        self.__api_secret = api_secret
-        self.__wait_for_nonce = wait_for_nonce
+    def __init__(self):
+        pass
 
     def __nonce(self):
         if self.__wait_for_nonce:

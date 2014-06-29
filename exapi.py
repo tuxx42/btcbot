@@ -17,6 +17,9 @@ class ExAPI():
     def get_min_bid(self):
         return self.current_depth[-1][0].get_min_bid()
 
+    def get_fees(self, **kwargs):
+        pass
+
     def get_max_ask(self):
         return self.current_depth[-1][0].get_max_ask()
 

@@ -9,6 +9,7 @@ import os
 import kraken
 import btce
 import exsimu
+#import cryptsy
 import time
 import threading
 from depth import depth
@@ -26,12 +27,17 @@ usage = {'exit': 'exit terminal',
          'kraken.get_balance': 'get balance from kraken',
          'kraken.get_depth': 'get depth from kraken',
          'kraken.print_depth': 'get depth from kraken',
-         'kraken.add_order': 'add an order',
-         'd': 'get depth comparison',
+         'kraken.add_order': 'add an order in kraken',
          'spread': 'get spread e.g: bot> spread api1=btce api2=kraken',
+         'btce.add_order': 'add an order in btc-e',
          'btce.get_balance': 'get balance from btc-e',
          'btce.get_depth': 'get depth from btc-e',
-         'btce.print_depth': 'get depth from btc-e'}
+         'btce.print_depth': 'get depth from btc-e',
+         'exsimu.add_order': 'add an order in btc-e',
+         'exsimu.get_balance': 'get balance from simulator',
+         'exsimu.get_depth': 'get depth from simulator',
+         'exsimu.print_depth': 'get depth from simulator',
+         }
 
 
 def get_depth(callback, callback_args, interval):
@@ -47,17 +53,14 @@ def start_depth_thread(api):
     t.start()
 
 
-kraken_api = kraken.kraken('foobox')
-kraken_api.decipher_key('kraken.enc')
-
-btce_api = btce.btce()
-exsimu_api = exsimu.exsimu()
-
-modules = {
-    'kraken': kraken_api,
-    'btce': btce_api,
-    'exsimu': exsimu_api,
+markets = {
+    'kraken': kraken.kraken('foobox'),
+    'btce': btce.btce(),
+    'exsimu': exsimu.exsimu(),
 }
+#   'cryptsy': cryptsy_api,
+
+markets['kraken'].decipher_key('kraken.enc')
 
 
 class Cli:
@@ -105,12 +108,21 @@ class MethodDispather():
 #        print(btce.btce.current_depth[-1])
 
     def spread(self, **kwargs):
-        api1 = kwargs['api1']
-        api2 = kwargs['api2']
+        kwargs.setdefault('pair', 'btc_eur')
+        params = {}
         try:
-            s = depth.spread(modules[api1].current_depth[-1][0],
-                             modules[api2].current_depth[-1][0])
-            print('Marketspread: %s' % s)
+            params['api1'] = markets[kwargs['api1']]
+            params['api2'] = markets[kwargs['api2']]
+            params['pair'] = kwargs['pair']
+        except Exception as e:
+            raise Exception('unknown key', e)
+        try:
+            s = depth.spread(**params)
+            if len(s.keys()):
+                print('Marketspread: '
+                      'volume(%s), profit(%s), buy(%s), sell(%s)' %
+                      (s['volume'], s['profit'],
+                       s['buy'].name, s['sell'].name))
         except Exception as e:
             print (e)
             pass
@@ -157,7 +169,7 @@ class MethodDispather():
             modulefunc = params[0].split('.')
             if len(modulefunc) > 1:
                 params[0] = params[0].split('.', 1)[1]
-                methodToCall = getattr(modules[modulefunc[0]], params[0])
+                methodToCall = getattr(markets[modulefunc[0]], params[0])
             else:
                 methodToCall = getattr(self, params[0])
         except IndexError as e:
@@ -170,9 +182,12 @@ class MethodDispather():
             return None
 
         param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
-        r = methodToCall(**param_dict)
-        if r:
-            print(r)
+        try:
+            r = methodToCall(**param_dict)
+            if r:
+                print(r)
+        except Exception as e:
+            print(e)
 
     def __init__(self, values):
         self.values = values
@@ -184,8 +199,8 @@ def handler(signum, frame):
 
 
 def main():
-    start_depth_thread(kraken_api)
-    start_depth_thread(btce_api)
+    start_depth_thread(markets['kraken'])
+    start_depth_thread(markets['btce'])
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)
