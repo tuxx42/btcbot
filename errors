@@ -1,0 +1,13 @@
+bot > Expecting value: line 1 column 1 (char 0)
+Exception in thread Thread-2:
+Traceback (most recent call last):
+  File "/usr/lib/python3.4/threading.py", line 920, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.4/threading.py", line 868, in run
+    self._target(*self._args, **self._kwargs)
+  File "./cli.py", line 49, in get_depth
+    callback(**callback_args)
+  File "/home/file/project/bot/btce.py", line 51, in get_depth
+    d = depth(**s)
+UnboundLocalError: local variable 's' referenced before assignment
+
