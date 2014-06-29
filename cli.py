@@ -33,10 +33,14 @@ usage = {'exit': 'exit terminal',
          'btce.get_balance': 'get balance from btc-e',
          'btce.get_depth': 'get depth from btc-e',
          'btce.print_depth': 'get depth from btc-e',
-         'exsimu.add_order': 'add an order in btc-e',
-         'exsimu.get_balance': 'get balance from simulator',
-         'exsimu.get_depth': 'get depth from simulator',
-         'exsimu.print_depth': 'get depth from simulator',
+         'exsimu1.add_order': 'add an order in btc-e',
+         'exsimu1.get_balance': 'get balance from simulator',
+         'exsimu1.get_depth': 'get depth from simulator',
+         'exsimu1.print_depth': 'get depth from simulator',
+         'exsimu2.add_order': 'add an order in btc-e',
+         'exsimu2.get_balance': 'get balance from simulator',
+         'exsimu2.get_depth': 'get depth from simulator',
+         'exsimu2.print_depth': 'get depth from simulator',
          }
 
 
@@ -56,7 +60,8 @@ def start_depth_thread(api):
 markets = {
     'kraken': kraken.kraken('foobox'),
     'btce': btce.btce(),
-    'exsimu': exsimu.exsimu(),
+    'exsimu1': exsimu.exsimu('fakedata1'),
+    'exsimu2': exsimu.exsimu('fakedata2'),
 }
 #   'cryptsy': cryptsy_api,
 
@@ -118,11 +123,13 @@ class MethodDispather():
             raise Exception('unknown key', e)
         try:
             s = depth.spread(**params)
-            if len(s.keys()):
-                print('Marketspread: '
+            if s['profitable']:
+                print('spread: '
                       'volume(%s), profit(%s), buy(%s), sell(%s)' %
                       (s['volume'], s['profit'],
                        s['buy'].name, s['sell'].name))
+            else:
+                print('spread: profitable=%d' % s['profitable'])
         except Exception as e:
             print (e)
             pass

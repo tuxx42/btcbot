@@ -13,7 +13,7 @@ import hashlib
 import hmac
 import time
 import random
-from modules.exsimuapi import fakedata
+from modules.exsimuapi import datasets
 
 
 class API:
@@ -21,9 +21,10 @@ class API:
     __api_secret = ''
     __nonce_v = 1
     __wait_for_nonce = False
+    __data_set = ''
 
-    def __init__(self):
-        pass
+    def __init__(self, data):
+        self.__data_set = data
 
     def __nonce(self):
         if self.__wait_for_nonce:
@@ -51,15 +52,17 @@ class API:
         return data
 
     def get_param(self, couple, param):
-        random.seed(time.time())
-        if param == "depth":
-            data = json.loads(fakedata.fakedata)
+        pass
+
+    def get_depth(self, pair, randomize=False):
+        if randomize:
+                random.seed(time.time())
+        data = datasets.data_set[self.__data_set]
+        if randomize:
             for s in ['asks', 'bids']:
                 for i in range(len(data[s])):
                     data[s][i][0] -= random.uniform(-5, 5)
-            return data
-        else:
-            return None
+        return data
 
     def getInfo(self):
         return self.__api_call('getInfo', {})

@@ -11,8 +11,8 @@ class exsimu(ExAPI):
     depth = {}
     name = 'exsimu'
 
-    def __init__(self, passwd=None):
-        self.api = modules.exsimuapi.API()
+    def __init__(self, data):
+        self.api = modules.exsimuapi.API(data)
 
     def get_fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
@@ -22,18 +22,13 @@ class exsimu(ExAPI):
             return Exception('pair?')
 
     def get_balance(self, dummy=None):
-        balance = {}
         try:
-            result = self.api.getInfo()['return']['funds']
-            for s in ['btc', 'eur']:
-                balance[s] = result[s]
-            return balance
+            return self.api.get_balance()
         except Exception as e:
             print(e)
-        pass
 
     def add_order(self, order, price, vol):
-        pass
+        print('adding order(%s), price(%s), vol(%s)' % (order, price, vol))
 
     def get_trades(self, **kwargs):
         pass
@@ -41,7 +36,7 @@ class exsimu(ExAPI):
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         try:
-            s = self.api.get_param(kwargs['pair'], 'depth')
+            s = self.api.get_depth(kwargs)
         except Exception as e:
             print(e)
         d = depth(**s)
