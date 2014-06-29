@@ -66,8 +66,8 @@ class depth(object):
 #    def spread(**kwargs):
 #        depth = {}
 #        vals = {}
-#        depth['api1'] = kwargs['api1'].depth[kwargs['pair']][0]
-#        depth['api2'] = kwargs['api2'].depth[kwargs['pair']][0]
+#        depth['api1'] = kwargs['api1'].curdepth[kwargs['pair']][0]
+#        depth['api2'] = kwargs['api2'].curdepth[kwargs['pair']][0]
 #
 #        vals['api1'] = {'min_ask': depth['api1'].get_min_ask(),
 #                        'max_bid': depth['api1'].get_max_bid()}
@@ -96,12 +96,12 @@ class depth(object):
 #        return (r)
     def spread(**kwargs):
         try:
-            d1 = kwargs['api1'].depth[kwargs['pair']][0]
+            d1 = kwargs['api1'].curdepth[kwargs['pair']][0]
         except:
             raise Exception('no depth for \'%s(%s)\'' %
                             (kwargs['api1'].name, kwargs['pair']))
         try:
-            d2 = kwargs['api2'].depth[kwargs['pair']][0]
+            d2 = kwargs['api2'].curdepth[kwargs['pair']][0]
         except:
             raise Exception('no depth for \'%s(%s)\'' %
                             (kwargs['api2'].name, kwargs['pair']))

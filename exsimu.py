@@ -8,11 +8,11 @@ from depth import depth
 
 
 class exsimu(ExAPI):
-    depth = {}
-    name = 'exsimu'
+    curdepth = {}
 
-    def __init__(self, data):
+    def __init__(self, data, name='exsimu'):
         self.api = modules.exsimuapi.API(data)
+        self.name = name
 
     def get_fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
@@ -33,6 +33,9 @@ class exsimu(ExAPI):
     def get_trades(self, **kwargs):
         pass
 
+    def print_depth(self, **kwargs):
+        print(self.curdepth)
+
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         try:
@@ -40,5 +43,5 @@ class exsimu(ExAPI):
         except Exception as e:
             print(e)
         d = depth(**s)
-        exsimu.depth[kwargs['pair']] = [d, time.time()]
+        self.curdepth[kwargs['pair']] = [d, time.time()]
         return d

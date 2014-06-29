@@ -13,7 +13,7 @@ from Crypto.Hash import MD5
 
 class kraken(ExAPI):
     PADDING = '{'
-    depth = {}
+    curdepth = {}
     pairs = {}
     name = 'kraken'
     pairs['btc_eur'] = 'XXBTZEUR'
@@ -137,9 +137,9 @@ class kraken(ExAPI):
             raise Exception
 
         d = [depth(**v) for k, v in s['result'].items()][0]
-        kraken.depth[kwargs['pair']] = [d, time.time()]
+        self.curdepth[kwargs['pair']] = [d, time.time()]
         return d
 
     def print_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
-        return self.depth[kwargs['pair']]
+        return self.curdepth[kwargs['pair']]

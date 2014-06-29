@@ -60,9 +60,10 @@ def start_depth_thread(api):
 markets = {
     'kraken': kraken.kraken('foobox'),
     'btce': btce.btce(),
-    'exsimu1': exsimu.exsimu('fakedata1'),
-    'exsimu2': exsimu.exsimu('fakedata2'),
+    'exsimu1': exsimu.exsimu('fakedata1', 'exsimu1'),
+    'exsimu2': exsimu.exsimu('fakedata2', 'exsimu2'),
 }
+
 #   'cryptsy': cryptsy_api,
 
 markets['kraken'].decipher_key('kraken.enc')

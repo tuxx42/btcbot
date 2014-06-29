@@ -1,4 +1,7 @@
 class ExAPI():
+    curdepth = {}
+    name = ''
+
     def cipher_key(self, dummy=None):
         pass
 

@@ -8,7 +8,7 @@ from depth import depth
 
 
 class btce(ExAPI):
-    depth = {}
+    curdepth = {}
     name = 'btce'
 
     def __init__(self, passwd=None):
@@ -49,5 +49,5 @@ class btce(ExAPI):
         except Exception as e:
             print(e)
         d = depth(**s)
-        btce.depth[kwargs['pair']] = [d, time.time()]
+        btce.curdepth[kwargs['pair']] = [d, time.time()]
         return d
