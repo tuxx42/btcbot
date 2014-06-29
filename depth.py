@@ -19,6 +19,9 @@ class trade(object):
         # TODO
         return self.value == other.value
 
+    def __gt__(self, other):
+        return self.value > other.value
+
     def __lt__(self, other):
         return self.value < other.value
 
@@ -64,6 +67,35 @@ class depth(object):
 
     @staticmethod
 #    def spread(**kwargs):
+#        kwargs['api1'].get_depth()
+#        kwargs['api2'].get_depth()
+#
+#        r = {}
+#        depth1 = kwargs['api1'].curdepth[kwargs['pair']][0]
+#        depth2 = kwargs['api2'].curdepth[kwargs['pair']][0]
+#
+#        if depth2.get_min_ask() < depth1.get_max_bid():
+#            print('buy from api2 sell api1')
+#            depth = {'buy': depth2, 'sell': depth1}
+#            r['profitable'] = True
+#        elif depth1.get_min_ask() < depth2.get_max_bid():
+#            print('buy from api1 sell api2')
+#            depth = {'buy': depth1, 'sell': depth2}
+#            r['profitable'] = True
+#        else:
+#            r['profitable'] = False
+#            return r
+#
+#        for ask in depth['buy'].asks:
+#            print (ask)
+
+#        for i in range(len(depth['buy'].asks)):
+#            if depth['buy'].asks[i] > depth['sell'].bids[-(i+1)]:
+#                print(depth['buy'].asks[i], depth['sell'].bids[-(i+1)])
+#
+#        return (r)
+#
+#    def spread(**kwargs):
 #        depth = {}
 #        vals = {}
 #        depth['api1'] = kwargs['api1'].curdepth[kwargs['pair']][0]
@@ -96,11 +128,13 @@ class depth(object):
 #        return (r)
     def spread(**kwargs):
         try:
+            kwargs['api1'].get_depth()
             d1 = kwargs['api1'].curdepth[kwargs['pair']][0]
         except:
             raise Exception('no depth for \'%s(%s)\'' %
                             (kwargs['api1'].name, kwargs['pair']))
         try:
+            kwargs['api2'].get_depth()
             d2 = kwargs['api2'].curdepth[kwargs['pair']][0]
         except:
             raise Exception('no depth for \'%s(%s)\'' %
