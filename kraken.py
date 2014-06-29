@@ -83,8 +83,8 @@ class kraken(ExAPI):
     def get_fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         fees = {}
-        fees['btc_eur'] = 0.2
-        fees['btc_usd'] = 0.2
+        fees['btc_eur'] = 0.002
+        fees['btc_usd'] = 0.002
         try:
             return fees[kwargs['pair']]
         except KeyError:

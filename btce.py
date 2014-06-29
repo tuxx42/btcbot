@@ -17,7 +17,7 @@ class btce(ExAPI):
             'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
     def get_fees(self, **kwargs):
-        return 0.2
+        return 0.002
         kwargs.setdefault('pair', 'btc_eur')
         s = self.api.get_param(kwargs['pair'], 'fee')
         try:

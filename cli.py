@@ -123,14 +123,9 @@ class MethodDispather():
         except Exception as e:
             raise Exception('unknown key', e)
         try:
-            s = depth.spread(**params)
-            if s['profitable']:
-                print('spread: '
-                      'volume(%s), profit(%s), buy(%s), sell(%s)' %
-                      (s['volume'], s['profit'],
-                       s['buy'].name, s['sell'].name))
-            else:
-                print('spread: profitable=%d' % s['profitable'])
+            r = depth.spread(**params)
+            for k, v in r.items():
+                print('%s %s' % (k, v))
         except Exception as e:
             print (e)
             pass
@@ -207,8 +202,8 @@ def handler(signum, frame):
 
 
 def main():
-    start_depth_thread(markets['kraken'])
-    start_depth_thread(markets['btce'])
+#    start_depth_thread(markets['kraken'])
+#    start_depth_thread(markets['btce'])
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)

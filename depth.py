@@ -77,9 +77,6 @@ class depth(object):
         kwargs['api1'].get_depth()
         kwargs['api2'].get_depth()
 
-        fee1 = kwargs['api1'].get_fees()
-        fee2 = kwargs['api2'].get_fees()
-
         r = {}
         depth1 = kwargs['api1'].curdepth[kwargs['pair']][0]
         depth2 = kwargs['api2'].curdepth[kwargs['pair']][0]
@@ -108,7 +105,6 @@ class depth(object):
                 'max_bid': maxb2,
                 'min_ask': mina1,
             }
-            r['profitable'] = True
         elif mina2 < maxb1:
             #print('buy from api2 sell api1')
             trades = {
@@ -119,7 +115,6 @@ class depth(object):
                 'max_bid': maxb1,
                 'min_ask': mina2,
             }
-            r['profitable'] = True
         else:
             r['profitable'] = False
             return r
@@ -135,135 +130,74 @@ class depth(object):
             map(lambda t: t.volume, trades['we_buy']))
         volume_to_trade = min(volume_to_sell, volume_to_buy)
 
-        weighted_value_sell = 0.0
-        vol = 0.0
-        for ask in trades['we_ask']:
-            if vol < volume_to_trade:
+        weighted_value_buy = 0.0
+        vol = volume_to_trade
+        for ask in trades['we_buy']:
+            if ask.volume < vol:
+                weighted_value_buy += ask.value * ask.volume
+                vol -= ask.volume
+            else:
+                weighted_value_buy += ask.value * vol
                 break
+        weighted_value_buy /= volume_to_trade
 
-        #sum(map(lambda t: t.volume * t.value, trades['we_sell'])) / \
-        #    volume_to_sell
-        #weighted_value_buy = sum(map(lambda t: t.volume * t.value, trades['we_buy'])) / \
-        #    volume_to_buy
+        weighted_value_sell = 0.0
+        vol = volume_to_trade
+        for bid in reversed(trades['we_sell']):
+            if bid.volume < vol:
+                weighted_value_sell += bid.value * bid.volume
+                vol -= bid.volume
+            else:
+                weighted_value_sell += bid.value * vol
+                break
+        weighted_value_sell /= volume_to_trade
 
-        print('wv sell: %f', weighted_value_sell)
-        print('wv buy: %f', weighted_value_buy)
-        print('Volume to sell: %f' % volume_to_sell)
-        print('Volume to buy: %f' % volume_to_buy)
-        print('Volume to trade: %f' % volume_to_trade)
+#        print('wv buy: %f' % weighted_value_buy)
+#        print('wv sell: %f' % weighted_value_sell)
+#        print('Volume to buy: %f' % volume_to_buy)
+#        print('Volume to sell: %f' % volume_to_sell)
+#        print('Volume to trade: %f' % volume_to_trade)
 
         order_buy = trade(
             value=trades['max_bid'].value,
             volume=volume_to_trade,
             typ=trade.BID
         )
-        print('BUY ORDER (%s)' % trades['buy_api'])
-        print(order_buy)
+#        print('BUY ORDER (%s)' % trades['buy_api'])
+#        print(order_buy)
 
         orders_sell = []
+        vol = volume_to_trade
         for bid in reversed(trades['we_sell']):
-            if volume_to_trade < bid.volume:
-                bid.volume = volume_to_trade
+            if vol < bid.volume:
+                bid.volume = vol
             order_sell = trade(
                 value=bid.value,
                 volume=bid.volume,
                 typ=trade.ASK
             )
             orders_sell.append(order_sell)
-            volume_to_trade -= bid.volume
+            vol -= bid.volume
             #print('SEL ORDER (%s)' % trades['sel_api'])
             #print(order_sell)
-            if volume_to_trade <= 0.0:
+            if vol <= 0.0:
                 break
 
-        profit = {}
-        profit['gross'] = weighted_value_sell - weighted_value_buy
-        profit['net'] = weighted_value_sell * volume_to_sell * (1.0 - trades['sel_api'].get_fees()) + \
-            weighted_value_buy * volume_to_buy * (1.0 - trades['buy_api'].get_fees())
-        print(profit)
+        r['profit_gross'] = weighted_value_sell - weighted_value_buy
 
+        fees = weighted_value_sell * volume_to_trade * \
+            trades['sel_api'].get_fees()
+        fees += weighted_value_buy * volume_to_trade * \
+            trades['buy_api'].get_fees()
 
-        #print('Profit:')
-        #for ask in trades['buy']:
-        #    print (ask)
+        r['profit_net'] = r['profit_gross'] - fees
+        r['profitable'] = r['profit_net'] > 0.0
 
         r['order_buy'] = order_buy
         r['api_buy'] = trades['buy_api']
         r['orders_sell'] = orders_sell
         r['api_sell'] = trades['sel_api']
-        print(r)
         return (r)
-#
-#    def spread(**kwargs):
-#        depth = {}
-#        vals = {}
-#        depth['api1'] = kwargs['api1'].curdepth[kwargs['pair']][0]
-#        depth['api2'] = kwargs['api2'].curdepth[kwargs['pair']][0]
-#
-#        vals['api1'] = {'min_ask': depth['api1'].get_min_ask(),
-#                        'max_bid': depth['api1'].get_max_bid()}
-#        vals['api2'] = {'min_ask': depth['api2'].get_min_ask(),
-#                        'max_bid': depth['api2'].get_max_bid()}
-#
-#        r = {}
-#        diff = trade.diff(vals['api1']['max_bid'], vals['api2']['min_ask'])
-#        if diff > 0:
-#            r['buy'] = kwargs['api1']
-#            r['sell'] = kwargs['api2']
-#            buys = depth['api1'].get_bids_bigger(vals['api2']['min_ask'])
-#            sells = depth['api2'].get_asks_lower(vals['api1']['max_bid'])
-#            print(buys)
-#            print(sells)
-#
-#        diff = trade.diff(vals['api2']['max_bid'], vals['api1']['min_ask'])
-#        if diff > 0:
-#            r['buy'] = kwargs['api2']
-#            r['sell'] = kwargs['api1']
-#            buys = depth['api2'].get_bids_bigger(vals['api1']['min_ask'])
-#            sells = depth['api1'].get_bids_bigger(vals['api2']['max_bid'])
-#            print(buys)
-#            print(sells)
-#
-#        return (r)
-    def spread2(**kwargs):
-        try:
-            kwargs['api1'].get_depth()
-            d1 = kwargs['api1'].curdepth[kwargs['pair']][0]
-        except:
-            raise Exception('no depth for \'%s(%s)\'' %
-                            (kwargs['api1'].name, kwargs['pair']))
-        try:
-            kwargs['api2'].get_depth()
-            d2 = kwargs['api2'].curdepth[kwargs['pair']][0]
-        except:
-            raise Exception('no depth for \'%s(%s)\'' %
-                            (kwargs['api2'].name, kwargs['pair']))
-
-        minb1 = d1.get_min_ask()
-        minb2 = d2.get_min_ask()
-        maxa1 = d1.get_max_bid()
-        maxa2 = d2.get_max_bid()
-
-        r = {}
-        if trade.diff(maxa1, minb2) > 0:
-            r['buy'] = kwargs['api1']
-            r['sell'] = kwargs['api2']
-            r['profit'] = trade.diff(maxa1, minb2)
-            r['open'] = d1.get_bids_bigger(minb2)
-            r['profitable'] = True
-        elif trade.diff(maxa2, minb1) > 0:
-            r['buy'] = kwargs['api2']
-            r['sell'] = kwargs['api1']
-            r['profit'] = trade.diff(maxa2, minb1)
-            r['open'] = d2.get_bids_bigger(minb1)
-            r['profitable'] = True
-        else:
-            r['profitable'] = False
-
-        if 'open' in r.keys():
-            r['volume'] = sum(map(lambda t: t.volume, r['open']))
-
-        return r
 
     def __repr__(self):
         r = ''

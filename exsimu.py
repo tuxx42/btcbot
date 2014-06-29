@@ -17,7 +17,7 @@ class exsimu(ExAPI):
     def get_fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         if kwargs['pair'] == 'btc_eur':
-            return 0.2
+            return 0.002
         else:
             return Exception('pair?')
 
