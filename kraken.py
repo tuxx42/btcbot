@@ -80,7 +80,7 @@ class kraken(ExAPI):
         self.k.secret = s.readline().strip()
         s.close()
 
-    def get_fees(self, **kwargs):
+    def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         fees = {}
         fees['btc_eur'] = 0.002
@@ -90,7 +90,7 @@ class kraken(ExAPI):
         except KeyError:
             raise Exception('invalid pair')
 
-    def get_balance(self, dummy=None):
+    def balance(self, dummy=None):
         s = self.k.query_private('Balance')
         if s['error']:
             print ("an error occured while getting the account balance: %s" %
@@ -121,7 +121,7 @@ class kraken(ExAPI):
             print (res)
             return res
 
-    def get_trades(self, **kwargs):
+    def trades(self, **kwargs):
         try:
             s = self.k.query_public('Trades', kwargs)
         except:
@@ -132,7 +132,7 @@ class kraken(ExAPI):
             raise Exception
         print(s['result'])
 
-    def get_depth(self, **kwargs):
+    def depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         kwargs.setdefault('count', 20)
         params = dict(kwargs)
@@ -149,7 +149,3 @@ class kraken(ExAPI):
         d = [depth(**v) for k, v in s['result'].items()][0]
         self.curdepth[kwargs['pair']] = [d, time.time()]
         return d
-
-    def print_depth(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
-        return self.curdepth[kwargs['pair']]

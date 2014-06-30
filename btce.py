@@ -17,7 +17,7 @@ class btce(ExAPI):
             'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX',
             'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
-    def get_fees(self, **kwargs):
+    def fees(self, **kwargs):
         return 0.002
         kwargs.setdefault('pair', 'btc_eur')
         s = self.api.get_param(kwargs['pair'], 'fee')
@@ -27,7 +27,7 @@ class btce(ExAPI):
         except:
             return Exception('unable to get pair?')
 
-    def get_balance(self, dummy=None):
+    def balance(self, dummy=None):
         balance = {}
         try:
             result = self.api.getInfo()['return']['funds']
@@ -51,10 +51,10 @@ class btce(ExAPI):
             #self.issued_orders.append(result['return']['order_id'])
             return result['return']
 
-    def get_trades(self, **kwargs):
+    def trades(self, **kwargs):
         pass
 
-    def get_depth(self, **kwargs):
+    def depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         kwargs.setdefault('count', 20)
         try:

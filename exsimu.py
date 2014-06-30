@@ -14,14 +14,14 @@ class exsimu(ExAPI):
         self.name = name
         self.curdepth = {}
 
-    def get_fees(self, **kwargs):
+    def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         if kwargs['pair'] == 'btc_eur':
             return 0.002
         else:
             return Exception('cannot get fees')
 
-    def get_balance(self, dummy=None):
+    def balance(self, dummy=None):
         try:
             return self.api.get_balance()
         except Exception as e:
@@ -38,16 +38,16 @@ class exsimu(ExAPI):
     def active_orders(self):
         return self.api.get_active_orders()
 
+    def modify_balance(self, cur, amount):
+        return self.api.modify_balance(cur, amount)
+
+    def trade_history(self):
+        pass
+
     def cancel_order(self, orderid):
         return self.api.cancel_order(orderid)
 
-    def get_trades(self, **kwargs):
-        pass
-
-    def print_depth(self, **kwargs):
-        print(self.curdepth)
-
-    def get_depth(self, **kwargs):
+    def depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         try:
             s = self.api.get_depth(kwargs)
