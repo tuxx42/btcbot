@@ -3,6 +3,8 @@ import modules.exsimuapi
 import time
 from exapi import ExAPI
 from depth import depth
+import logging
+log = logging.getLogger(__name__)
 
 #    pair = "btc_usd"
 
@@ -47,12 +49,11 @@ class exsimu(ExAPI):
     def cancel_order(self, orderid):
         return self.api.cancel_order(orderid)
 
-    def depth(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
+    def depth(self, pair):
         try:
-            s = self.api.get_depth(kwargs)
+            s = self.api.get_depth({'pair': pair})
         except Exception as e:
             print(e)
         d = depth(**s)
-        self.curdepth[kwargs['pair']] = [d, time.time()]
+        self.curdepth[pair] = [d, time.time()]
         return d

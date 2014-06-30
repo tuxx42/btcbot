@@ -14,6 +14,12 @@ import time
 import threading
 from depth import depth
 
+import logging
+logging.basicConfig(filename='/tmp/bot.log', level=logging.DEBUG,
+                    format='%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+                    datefmt="%Y-%m-%d %H:%M:%S")
+log = logging.getLogger('cli')
+
 version = "0.1 beta"
 prompt = "bot > "
 histfile = "/tmp/history"
@@ -111,17 +117,11 @@ class MethodDispather():
 #        print('------')
 #        print(btce.btce.current_depth[-1])
 
-    def spread(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
-        params = {}
+    def spread(self, api1, api2, pair='btc_eur'):
+        log.info('calculating spread between %s and %s',
+                 api1, api2)
         try:
-            params['api1'] = markets[kwargs['api1']]
-            params['api2'] = markets[kwargs['api2']]
-            params['pair'] = kwargs['pair']
-        except Exception as e:
-            raise Exception('unknown key', e)
-        try:
-            r = depth.spread(**params)
+            r = depth.spread(markets[api1], markets[api2], pair)
             for k, v in r.items():
                 print('%s %s' % (k, v))
         except Exception as e:
@@ -166,6 +166,7 @@ class MethodDispather():
             #res[d] = __import__("modules." + d, fromlist=["*"])
 
     def call(self, params=None):
+        log.debug('calling %s', params)
         try:
             modulefunc = params[0].split('.')
             if len(modulefunc) > 1:
@@ -174,12 +175,10 @@ class MethodDispather():
             else:
                 methodToCall = getattr(self, params[0])
         except IndexError as e:
-            print(e)
-            print ('unknown command')
+            log.exception(e)
             return None
         except Exception as e:
-            print(e)
-            print (params[0], 'unknown command')
+            log.exception(e)
             return None
 
         param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
@@ -188,7 +187,7 @@ class MethodDispather():
             if r:
                 print(r)
         except Exception as e:
-            print(e)
+            log.exception(e)
 
     def __init__(self, values):
         self.values = values
@@ -208,6 +207,7 @@ def main():
 
     signal.signal(signal.SIGINT, handler)
 
+    log.info('Enter main event loop')
     while 1:
         a = input(prompt)
         try:

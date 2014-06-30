@@ -10,6 +10,9 @@ from depth import depth
 from Crypto.Cipher import AES
 from Crypto.Hash import MD5
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class kraken(ExAPI):
     PADDING = '{'
@@ -36,7 +39,7 @@ class kraken(ExAPI):
     def cipher_key(self, dummy=None):
         BLOCK_SIZE = 32
 
-        pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * self.PADDING
+        pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * kraken.PADDING
         EncodeAES = lambda c, s: base64.b64encode(c.encrypt(pad(s)))
 
         f = open(self.key, "r")
@@ -58,7 +61,7 @@ class kraken(ExAPI):
 
         # one-liner to sufficiently pad the text to be encrypted
         DecodeAES = lambda c, e: c.decrypt(
-            base64.b64decode(e)).decode("utf-8").rstrip(self.PADDING)
+            base64.b64decode(e)).decode("utf-8").rstrip(kraken.PADDING)
 
         f = open(key, "rb")
         encoded = f.readline().strip()
@@ -103,7 +106,7 @@ class kraken(ExAPI):
             return balance
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
-        getpair = self.pairs[pair]
+        getpair = kraken.pairs[pair]
         try:
             res = self.k.query_private('AddOrder',
                                        {'pair': getpair,
@@ -132,20 +135,17 @@ class kraken(ExAPI):
             raise Exception
         print(s['result'])
 
-    def depth(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
-        kwargs.setdefault('count', 20)
-        params = dict(kwargs)
-        params['pair'] = self.pairs[kwargs['pair']]
+    def depth(self, pair='btc_eur', count=20):
         try:
-            s = self.k.query_public('Depth', params)
-        except:
-            print ("unable to get trades")
-            raise Exception
+            s = self.k.query_public('Depth', {'pair': kraken.pairs[pair]})
+        except Exception as e:
+            log.exception(e)
+            raise
+
         if s['error']:
             print ("an error occured %s" % s['error'])
-            raise Exception
+            raise Exception(s['error'])
 
         d = [depth(**v) for k, v in s['result'].items()][0]
-        self.curdepth[kwargs['pair']] = [d, time.time()]
+        self.curdepth[pair] = [d, time.time()]
         return d

@@ -4,6 +4,9 @@ import time
 from exapi import ExAPI
 from depth import depth
 
+import logging
+log = logging.getLogger(__name__)
+
 #    pair = "btc_usd"
 
 
@@ -54,15 +57,14 @@ class btce(ExAPI):
     def trades(self, **kwargs):
         pass
 
-    def depth(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
-        kwargs.setdefault('count', 20)
+    def depth(self, pair='btc_eur', count=20):
         try:
-            s = self.api.get_param(kwargs['pair'], 'depth')
+            s = self.api.get_param(pair, 'depth')
         except Exception as e:
-            print(e)
+            log.exception(e)
+            raise
         d = depth(**s)
-        d.asks = d.asks[:kwargs['count']]
-        d.bids = d.bids[-kwargs['count']:]
-        btce.curdepth[kwargs['pair']] = [d, time.time()]
+        d.asks = d.asks[:count]
+        d.bids = d.bids[-count:]
+        btce.curdepth[pair] = [d, time.time()]
         return d
