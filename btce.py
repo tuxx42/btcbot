@@ -9,6 +9,7 @@ from depth import depth
 
 class btce(ExAPI):
     curdepth = {}
+    #issued_orders = []
     name = 'btce'
 
     def __init__(self, passwd=None):
@@ -36,18 +37,32 @@ class btce(ExAPI):
         except Exception as e:
             print(e)
 
-    def add_order(self, order, price, vol):
-        pass
+    def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
+        try:
+            result = self.api.Trade(tpair=pair,
+                                    ttype=order,
+                                    trate=price,
+                                    tamount=vol)
+            return result
+        except Exception as e:
+            print(e)
+            raise Exception('could not issue order')
+        if result['success']:
+            #self.issued_orders.append(result['return']['order_id'])
+            return result['return']
 
     def get_trades(self, **kwargs):
         pass
 
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
+        kwargs.setdefault('count', 20)
         try:
             s = self.api.get_param(kwargs['pair'], 'depth')
         except Exception as e:
             print(e)
         d = depth(**s)
+        d.asks = d.asks[:kwargs['count']]
+        d.bids = d.bids[-kwargs['count']:]
         btce.curdepth[kwargs['pair']] = [d, time.time()]
         return d

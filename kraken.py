@@ -104,14 +104,22 @@ class kraken(ExAPI):
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
         getpair = self.pairs[pair]
-        s = self.k.query_private('AddOrder',
-                                 {'pair': getpair,
-                                  'type': order,
-                                  'ordertype': ordertype,
-                                  'price': price,
-                                  'volume': vol,
-                                  })
-        return s
+        try:
+            res = self.k.query_private('AddOrder',
+                                       {'pair': getpair,
+                                        'type': order,
+                                        'ordertype': ordertype,
+                                        'price': price,
+                                        'volume': vol,
+                                        })
+        except Exception as e:
+            print(e)
+            raise Exception('could not issue order')
+        if res['error']:
+            raise Exception(res['error'])
+        else:
+            print (res)
+            return res
 
     def get_trades(self, **kwargs):
         try:
@@ -126,9 +134,11 @@ class kraken(ExAPI):
 
     def get_depth(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
+        kwargs.setdefault('count', 20)
+        params = dict(kwargs)
+        params['pair'] = self.pairs[kwargs['pair']]
         try:
-            s = self.k.query_public('Depth',
-                                    {'pair': self.pairs[kwargs['pair']]})
+            s = self.k.query_public('Depth', params)
         except:
             print ("unable to get trades")
             raise Exception

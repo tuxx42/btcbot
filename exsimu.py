@@ -19,16 +19,27 @@ class exsimu(ExAPI):
         if kwargs['pair'] == 'btc_eur':
             return 0.002
         else:
-            return Exception('pair?')
+            return Exception('cannot get fees')
 
     def get_balance(self, dummy=None):
         try:
             return self.api.get_balance()
         except Exception as e:
             print(e)
+            raise Exception('cannot get balance')
 
-    def add_order(self, order, price, vol):
-        print('adding order(%s), price(%s), vol(%s)' % (order, price, vol))
+    def add_order(self, order, price, vol, pair='btc_eur'):
+        s = self.api.add_order(pair=pair,
+                               order=order,
+                               price=price,
+                               vol=vol)
+        return s
+
+    def active_orders(self):
+        return self.api.get_active_orders()
+
+    def cancel_order(self, orderid):
+        return self.api.cancel_order(orderid)
 
     def get_trades(self, **kwargs):
         pass

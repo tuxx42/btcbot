@@ -26,11 +26,11 @@ class trade(object):
         return self.value < other.value
 
     def __repr__(self):
-        r = self.typ and 'ASK: ' or 'BID: '
-        r += 'price(%f)' % self.value
-        r += ', vol(%f)' % self.volume
-#        if self.timestamp:
-#            r += ', time(%s)' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        r = self.typ and 'ask' or 'bid'
+        r += ' price(%f)' % self.value
+        r += ' vol(%f)' % self.volume
+        if self.timestamp:
+            r += ', time(%s)' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         return r
 
     @staticmethod
@@ -65,6 +65,19 @@ class depth(object):
     def get_asks_lower(self, edge):
         return list(filter(lambda t: t.value < edge.value,
                            self.asks))
+
+    def get_weighted_price(self, trades, volume_to_trade):
+        weighted_value = 0.0
+        vol = volume_to_trade
+        for item in trades:
+            if item.volume < vol:
+                weighted_value += item.value * item.volume
+                vol -= item.volume
+            else:
+                weighted_value += item.value * vol
+                break
+        weighted_value /= volume_to_trade
+        return weighted_value
 
     @staticmethod
     def spread(**kwargs):
@@ -124,28 +137,34 @@ class depth(object):
             map(lambda t: t.volume, trades['we_buy']))
         volume_to_trade = min(volume_to_sell, volume_to_buy)
 
-        weighted_value_buy = 0.0
-        vol = volume_to_trade
-        for ask in trades['we_buy']:
-            if ask.volume < vol:
-                weighted_value_buy += ask.value * ask.volume
-                vol -= ask.volume
-            else:
-                weighted_value_buy += ask.value * vol
-                break
-        weighted_value_buy /= volume_to_trade
+        weighted_value_buy = depth1.get_weighted_price(
+            trades['we_buy'], volume_to_trade)
 
-        weighted_value_sell = 0.0
-        vol = volume_to_trade
-        for bid in reversed(trades['we_sell']):
-            if bid.volume < vol:
-                weighted_value_sell += bid.value * bid.volume
-                vol -= bid.volume
-            else:
-                weighted_value_sell += bid.value * vol
-                break
-        weighted_value_sell /= volume_to_trade
+        weighted_value_sell = depth1.get_weighted_price(
+            reversed(trades['we_sell']), volume_to_trade)
 
+#        weighted_value_buy = 0.0
+#        vol = volume_to_trade
+#        for ask in trades['we_buy']:
+#            if ask.volume < vol:
+#                weighted_value_buy += ask.value * ask.volume
+#                vol -= ask.volume
+#            else:
+#                weighted_value_buy += ask.value * vol
+#                break
+#        weighted_value_buy /= volume_to_trade
+#
+#        weighted_value_sell = 0.0
+#        vol = volume_to_trade
+#        for bid in reversed(trades['we_sell']):
+#            if bid.volume < vol:
+#                weighted_value_sell += bid.value * bid.volume
+#                vol -= bid.volume
+#            else:
+#                weighted_value_sell += bid.value * vol
+#                break
+#        weighted_value_sell /= volume_to_trade
+#
 #        print('wv buy: %f' % weighted_value_buy)
 #        print('wv sell: %f' % weighted_value_sell)
 #        print('Volume to buy: %f' % volume_to_buy)
