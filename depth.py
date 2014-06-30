@@ -199,9 +199,9 @@ class depth(object):
         r['profit_gross'] = weighted_value_sell - weighted_value_buy
 
         fees = weighted_value_sell * volume_to_trade * \
-            trades['sel_api'].get_fees()
+            trades['sel_api'].fees()
         fees += weighted_value_buy * volume_to_trade * \
-            trades['buy_api'].get_fees()
+            trades['buy_api'].fees()
 
         r['profit_net'] = r['profit_gross'] - fees
         r['profitable'] = r['profit_net'] > 0.0

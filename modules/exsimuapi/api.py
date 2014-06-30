@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import configparser
 #from modules.exsimuapi import datasets
 
 
@@ -15,7 +16,6 @@ class API:
 #    __balance = {}
 
     def __init__(self, data):
-        self.__txid = 0
         self.__data_set = data
         fname = 'modules/exsimuapi/' + self.__data_set + '.dat'
         with open(fname) as f:
@@ -23,9 +23,34 @@ class API:
         self.__balance = {}
         self.__active_orders = {}
         self.__closed_orders = {}
-        self.__balance['btc'] = float(0.95)
-        self.__balance['eur'] = float(2000)
-        self.__balance['usd'] = float(59)
+        self.__config = configparser.ConfigParser()
+        self.__configname = 'modules/exsimuapi/' + self.__data_set + '.ini'
+        try:
+            self.__config.read(self.__configname)
+            for cur in self.__config['balance']:
+                self.__balance[cur] = float(self.__config['balance'][cur])
+            self.__orderid = int(self.__config['orders']['orderid'])
+            self.__active_orders = dict(self.__config['active_orders'])
+            self.__closed_orders = dict(self.__config['closed_orders'])
+        except:
+            self.__orderid = 0
+            self.__balance['btc'] = float(0.95)
+            self.__balance['eur'] = float(2000)
+            self.__balance['usd'] = float(59)
+            self.__config['balance'] = self.__balance
+            pass
+
+    def save_config(self):
+        self.__config['balance'] = self.__balance
+        self.__config['active_orders'] = self.__active_orders
+        self.__config['closed_orders'] = self.__closed_orders
+        self.__config['orders'] = { 'orderid': self.__orderid }
+        with open(self.__configname, 'w') as f:
+            self.__config.write(f)
+
+    def modify_balance(self, cur, amount):
+        self.__balance[cur] = float(amount)
+        self.save_config()
 
     # return depth
     def get_depth(self, pair):
@@ -39,7 +64,8 @@ class API:
     def get_balance(self):
         return self.__balance
 
-    def execute_order(self, **order):
+    # execute orders
+    def execute_orders(self, **order):
         price = float(order['price'])
         if order['order'] == 'buy':
             depth = self.__depth_data['asks']
@@ -87,8 +113,8 @@ class API:
             if float(vol) > self.__balance['btc']:
                 raise Exception('EOrder:Insufficient volume')
             else:
-                self.__balance['btc'] -= float(vol) * float(price)
-        order_id = 'tx_' + str(self.__txid)
+                self.__balance['btc'] -= float(vol)
+        order_id = 'tx_' + str(self.__orderid)
         new_order = {
             'pair': str(pair),
             'order': str(order),
@@ -97,13 +123,23 @@ class API:
             'state': 'open',
             #'txid': order_id
         }
-        self.__txid += 1
+        self.__orderid += 1
 
-        new_order = self.execute_order(**new_order)
+        new_order = self.execute_orders(**new_order)
         if new_order['state'] == 'open' or new_order['state'] == 'partial':
+            print('a')
             self.__active_orders[order_id] = new_order
         elif new_order['state'] == 'closed':
             self.__closed_orders[order_id] = new_order
+
+        if new_order['state'] == 'partial' or new_order['state'] == 'closed':
+            if order == 'buy':
+                self.__balance['btc'] += new_order['executed_volume']
+            elif order == 'sell':
+                self.__balance[cur] += new_order['price'] * \
+                    new_order['executed_volume']
+            self.save_config()
+
         return new_order
 
     # delete order from dict and restore funds / btc

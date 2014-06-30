@@ -33,14 +33,14 @@ usage = {'exit': 'exit terminal',
          'btce.get_balance': 'get balance from btc-e',
          'btce.get_depth': 'get depth from btc-e',
          'btce.print_depth': 'get depth from btc-e',
-         'exsimu1.add_order': 'add an order in btc-e',
-         'exsimu1.get_balance': 'get balance from simulator',
-         'exsimu1.get_depth': 'get depth from simulator',
-         'exsimu1.print_depth': 'get depth from simulator',
-         'exsimu2.add_order': 'add an order in btc-e',
-         'exsimu2.get_balance': 'get balance from simulator',
-         'exsimu2.get_depth': 'get depth from simulator',
-         'exsimu2.print_depth': 'get depth from simulator',
+         'exsimu1.add_order': 'add an order in btc-e (price, vol, order)',
+         'exsimu1.fees': 'get exchange fees',
+         'exsimu1.balance': 'get balance from simulator',
+         'exsimu1.depth': 'get depth from simulator',
+         'exsimu1.active_orders': 'get active orders',
+         'exsimu1.cancel_orders': 'cancel active order',
+         'exsimu1.trade_history': 'get trade history',
+         'exsimu1.modify_balance': 'set currency balance in sim (cur, amount)'
          }
 
 
@@ -60,8 +60,8 @@ def start_depth_thread(api):
 markets = {
     'kraken': kraken.kraken('foobox'),
     'btce': btce.btce(),
-    'exsimu1': exsimu.exsimu('fakedata1', 'exsimu1'),
-    'exsimu2': exsimu.exsimu('fakedata2', 'exsimu2'),
+    'exsimu1': exsimu.exsimu('data1', 'exsimu1'),
+    'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
 
 #   'cryptsy': cryptsy_api,
