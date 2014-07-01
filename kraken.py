@@ -18,9 +18,10 @@ class kraken(ExAPI):
     pairs['eur'] = 'ZEUR'
 
     def __init__(self, key_mgmt):
-        self.k = modules.krakenex.API()
-        self.k.key = key_mgmt.key
-        self.k.secret = key_mgmt.secret
+        self.k = modules.krakenex.API(
+            key=key_mgmt.key,
+            secret=key_mgmt.secret,
+        )
 
     def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')

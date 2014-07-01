@@ -1,15 +1,16 @@
 from Crypto.Cipher import AES
 from Crypto.Hash import MD5
 import base64
+#import io
 
 import logging
 log = logging.getLogger(__name__)
 
 
 class KeyMgmt(object):
-    def __init__(self, ):
-        self.key = None
-        self.secret = None
+    def __init__(self, key, secret):
+        self.key = key
+        self.secret = secret
 
     # @Joel: das ist sowas wie ein ueberladener constructor
     @classmethod
@@ -33,20 +34,13 @@ class KeyMgmt(object):
         if decoded is None:
             raise Exception('Failed to decode Keyfile')
 
-        cls.key, cls.secret = decoded.splitlines()[:2]
-        return cls
+        #s = io.StringIO(decoded)
+        #cls.key = s.readline().strip()
+        #cls.secret = s.readline().strip()
+        #s.close()
 
-    @classmethod
-    def from_string(cls, secret, key, password=None):
-        if password:
-            # TODO
-            raise Exception(
-                'Password not yet supported for keymgmt from string'
-            )
-
-        cls.key = key
-        cls.secret = secret
-        return cls
+        key, secret = decoded.splitlines()[:2]
+        return cls(key, secret)
 
     @staticmethod
     def decode_AES(encrypted, encoded_key, padding):

@@ -65,9 +65,11 @@ def start_depth_thread(api):
 
 key_mgmt_kraken = KeyMgmt.from_file(
     'kraken.enc',
-    password='foobox'
+    password='foobox',
+    padding=kraken.kraken.PADDING
 )
-key_mgmt_btce = KeyMgmt.from_string(
+
+key_mgmt_btce = KeyMgmt(
     'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
     'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX'
 )
