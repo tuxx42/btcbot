@@ -15,10 +15,10 @@ class btce(ExAPI):
     #issued_orders = []
     name = 'btce'
 
-    def __init__(self, passwd=None):
+    def __init__(self, key_mgmt):
         self.api = modules.btceapi.API(
-            'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX',
-            'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+            key_mgmt.key,
+            key_mgmt.secret)
 
     def fees(self, **kwargs):
         return 0.002

@@ -13,10 +13,12 @@ import exsimu
 import time
 import threading
 from depth import depth
+from keymgt import KeyMgmt
 
 import logging
 logging.basicConfig(filename='/tmp/bot.log', level=logging.DEBUG,
-                    format='%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+                    format='%(asctime)s.%(msecs)d %(levelname)s' +
+                    '%(module)s - %(funcName)s: %(message)s',
                     datefmt="%Y-%m-%d %H:%M:%S")
 log = logging.getLogger('cli')
 
@@ -61,9 +63,17 @@ def start_depth_thread(api):
     t.start()
 
 
+key_mgmt_kraken = KeyMgmt.from_file(
+    'kraken.enc',
+    password='foobox'
+)
+key_mgmt_btce = KeyMgmt.from_string(
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX'
+)
 markets = {
-    'kraken': kraken.kraken('foobox'),
-    'btce': btce.btce(),
+    'kraken': kraken.kraken(key_mgmt_kraken),
+    'btce': btce.btce(key_mgmt_btce),
     'exsimu1': exsimu.exsimu('data1', 'exsimu1'),
     'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
