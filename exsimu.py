@@ -40,8 +40,9 @@ class exsimu(ExAPI):
     def active_orders(self):
         return self.api.get_active_orders()
 
-    def modify_balance(self, cur, amount):
-        return self.api.modify_balance(cur, amount)
+    def modify_balance(self, **kwargs):
+        for cur in kwargs.keys():
+            return self.api.modify_balance(cur, kwargs[cur])
 
     def trade_history(self):
         pass
@@ -49,11 +50,12 @@ class exsimu(ExAPI):
     def cancel_order(self, orderid):
         return self.api.cancel_order(orderid)
 
-    def depth(self, pair):
+    def depth(self, **kwargs):
+        kwargs.setdefault('pair', 'btc_eur')
         try:
-            s = self.api.get_depth({'pair': pair})
+            s = self.api.get_depth({'pair': kwargs['pair']})
         except Exception as e:
             print(e)
         d = depth(**s)
-        self.curdepth[pair] = [d, time.time()]
+        self.curdepth[kwargs['pair']] = [d, time.time()]
         return d

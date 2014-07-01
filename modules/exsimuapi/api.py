@@ -44,7 +44,7 @@ class API:
         self.__config['balance'] = self.__balance
         self.__config['active_orders'] = self.__active_orders
         self.__config['closed_orders'] = self.__closed_orders
-        self.__config['orders'] = { 'orderid': self.__orderid }
+        self.__config['orders'] = {'orderid': self.__orderid}
         with open(self.__configname, 'w') as f:
             self.__config.write(f)
 
@@ -78,21 +78,26 @@ class API:
         # TODO average price
         order['executed_volume'] = 0
         vol = order['volume']
+        price_avg = 0
         for trade in trades:
             if vol > trade[1]:
                 vol -= trade[1]
                 print('depth item consumed', trade)
+                price_avg += trade[0] * trade[1]
                 depth.remove(trade)
                 order['executed_volume'] += trade[1]
                 order['state'] = 'partial'
             else:
-                print('depth item reduced ',
-                      depth[depth.index(trade)], 'by', vol)
+                print('depth item reduced by %f %s' %
+                      (vol, repr(depth[depth.index(trade)])))
+                price_avg += trade[0] * vol
                 depth[depth.index(trade)][1] -= vol
                 vol = 0
                 order['executed_volume'] = order['volume']
                 order['state'] = 'closed'
                 break
+        price_avg /= order['executed_volume']
+        order['executed_price_avg'] = price_avg
 
         return order
 
@@ -127,7 +132,6 @@ class API:
 
         new_order = self.execute_orders(**new_order)
         if new_order['state'] == 'open' or new_order['state'] == 'partial':
-            print('a')
             self.__active_orders[order_id] = new_order
         elif new_order['state'] == 'closed':
             self.__closed_orders[order_id] = new_order
@@ -135,8 +139,11 @@ class API:
         if new_order['state'] == 'partial' or new_order['state'] == 'closed':
             if order == 'buy':
                 self.__balance['btc'] += new_order['executed_volume']
+                self.__balance[cur] += float(price) * float(vol)
+                self.__balance[cur] -= new_order['executed_volume'] * \
+                    new_order['executed_price_avg']
             elif order == 'sell':
-                self.__balance[cur] += new_order['price'] * \
+                self.__balance[cur] += float(price) * \
                     new_order['executed_volume']
             self.save_config()
 

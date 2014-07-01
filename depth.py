@@ -29,7 +29,7 @@ class trade(object):
 
     def __repr__(self):
         r = self.typ and 'ask' or 'bid'
-        r += ' price(%f)' % self.value
+        r += ' value(%f)' % self.value
         r += ' vol(%f)' % self.volume
         if self.timestamp:
             r += ', time(%s)' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
@@ -93,8 +93,8 @@ class depth(object):
         """
 
         r = {}
-        depth1 = api1.depth(pair)
-        depth2 = api2.depth(pair)
+        depth1 = api1.depth()
+        depth2 = api2.depth()
 
         mina1 = depth1.get_min_ask()
         maxb1 = depth1.get_max_bid()
@@ -148,6 +148,14 @@ class depth(object):
 
         weighted_value_sell = depth1.get_weighted_price(
             reversed(trades['we_sell']), volume_to_trade)
+
+        log.debug('weighted_value_buy %f * vol %f = price %f' % (
+            weighted_value_buy, volume_to_trade,
+            weighted_value_buy * volume_to_trade))
+        log.debug('weighted_value_sell %f * vol %f = price %f' % (
+            weighted_value_sell, volume_to_trade,
+            weighted_value_sell * volume_to_trade))
+
         order_buy = trade(
             value=trades['max_bid'].value,
             volume=volume_to_trade,
@@ -172,7 +180,8 @@ class depth(object):
             if vol <= 0.0:
                 break
 
-        r['profit_gross'] = weighted_value_sell - weighted_value_buy
+        r['profit_gross'] = (weighted_value_sell - weighted_value_buy) * \
+            volume_to_trade
 
         fees = weighted_value_sell * volume_to_trade * \
             trades['sel_api'].fees()
