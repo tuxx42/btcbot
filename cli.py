@@ -138,7 +138,7 @@ class MethodDispather():
                 print('%s %s' % (k, v))
         except Exception as e:
             print (e)
-            pass
+            log.exception(e)
 
     def exit(self, params=None):
         print ('goodbye.')
@@ -187,18 +187,20 @@ class MethodDispather():
             else:
                 methodToCall = getattr(self, params[0])
         except IndexError as e:
+            print(e)
             log.exception(e)
             return None
         except Exception as e:
+            print(e)
             log.exception(e)
             return None
 
         param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
         try:
             r = methodToCall(**param_dict)
-            if r:
-                print(r)
+            print(r)
         except Exception as e:
+            print(e)
             log.exception(e)
 
     def __init__(self, values):
