@@ -51,6 +51,7 @@ class API:
     def modify_balance(self, cur, amount):
         self.__balance[cur] = float(amount)
         self.save_config()
+        return self.__balance
 
     # return depth
     def get_depth(self, pair):
@@ -96,8 +97,9 @@ class API:
                 order['executed_volume'] = order['volume']
                 order['state'] = 'closed'
                 break
-        price_avg /= order['executed_volume']
-        order['executed_price_avg'] = price_avg
+        if order['executed_volume'] > 0:
+            price_avg /= order['executed_volume']
+            order['executed_price_avg'] = price_avg
 
         return order
 
@@ -131,6 +133,7 @@ class API:
         self.__orderid += 1
 
         new_order = self.execute_orders(**new_order)
+
         if new_order['state'] == 'open' or new_order['state'] == 'partial':
             self.__active_orders[order_id] = new_order
         elif new_order['state'] == 'closed':
@@ -145,7 +148,8 @@ class API:
             elif order == 'sell':
                 self.__balance[cur] += float(price) * \
                     new_order['executed_volume']
-            self.save_config()
+
+        self.save_config()
 
         return new_order
 
@@ -161,12 +165,14 @@ class API:
             else:
                 raise Exception('pair not implemented')
             if order['order'] == 'buy':
-                self.__balance[cur] += float(order['price'])
+                self.__balance[cur] += float(order['price']) * \
+                    float(order['volume'])
             elif order['order'] == 'sell':
                 self.__balance['btc'] += float(order['volume'])
             else:
                 raise Exception('something went utterly wrong')
             del self.__active_orders[order_id]
+            self.save_config()
         else:
             raise Exception('order id does not exist')
         return order
