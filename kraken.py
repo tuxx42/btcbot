@@ -61,7 +61,6 @@ class kraken(ExAPI):
         if res['error']:
             raise Exception(res['error'])
         else:
-            print (res)
             return res
 
     def trades(self, **kwargs):
@@ -74,6 +73,24 @@ class kraken(ExAPI):
             print ("an error occured %s" % s['error'])
             raise Exception
         print(s['result'])
+
+    def active_orders(self):
+        res = self.k.query_private('OpenOrders')
+        return res
+
+    def closed_orders(self):
+        res = self.k.query_private('ClosedOrders')
+        return res
+
+    def query_order(self, order_id):
+        res = self.k.query_private('QueryOrders',
+                                   {'txid': order_id})
+        return res
+
+    def cancel_order(self, orderid):
+        res = self.k.query_private('CancelOrder',
+                                   {'txid': orderid})
+        return res
 
     def depth(self, pair='btc_eur', count=20):
         try:
