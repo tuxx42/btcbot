@@ -82,19 +82,19 @@ class depth(object):
         return weighted_value
 
     @staticmethod
-    def spread(api1, api2, pair):
+    #def spread(api1, api2, pair):
+    def spread(depth1, depth2, fees1=0.02, fees2=0.02):
 
         """
         get price spread across two markets
         Input:
-            api1    market api 1
-            api2    market api2
-            pair    btc_eur
+            depth1    market1 depth
+            depth2    market2 depth
+            fees1     market1 fees
+            fees2     market2 fees
         """
 
         r = {}
-        depth1 = api1.depth()
-        depth2 = api2.depth()
 
         mina1 = depth1.get_min_ask()
         maxb1 = depth1.get_max_bid()
@@ -113,23 +113,29 @@ class depth(object):
         if mina1 < maxb2:
             #print('buy from api1 sell api2')
             trades = {
-                'buy_api': api1,
-                'sel_api': api2,
+                #'buy_api': api1,
+                #'sel_api': api2,
+                'direction': 1,
                 'we_buy': depth1.get_asks_lower(maxb2),
                 'we_sell': depth2.get_bids_higher(mina1),
                 'max_bid': maxb2,
                 'min_ask': mina1,
             }
+            sell_fees = fees2
+            buy_fees = fees1
         elif mina2 < maxb1:
             #print('buy from api2 sell api1')
             trades = {
-                'buy_api': api2,
-                'sel_api': api1,
+                #'buy_api': api2,
+                #'sel_api': api1,
+                'direction': -1,
                 'we_buy': depth2.get_asks_lower(maxb1),
                 'we_sell': depth1.get_bids_higher(mina2),
                 'max_bid': maxb1,
                 'min_ask': mina2,
             }
+            sell_fees = fees1
+            buy_fees = fees2
         else:
             r['profitable'] = False
             return r
@@ -183,10 +189,8 @@ class depth(object):
         r['profit_gross'] = (weighted_value_sell - weighted_value_buy) * \
             volume_to_trade
 
-        fees = weighted_value_sell * volume_to_trade * \
-            trades['sel_api'].fees()
-        fees += weighted_value_buy * volume_to_trade * \
-            trades['buy_api'].fees()
+        fees = weighted_value_sell * volume_to_trade * sell_fees
+        fees += weighted_value_buy * volume_to_trade * buy_fees
 
         r['profit_net'] = r['profit_gross'] - fees
         r['profitable'] = r['profit_net'] > 0.0

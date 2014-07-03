@@ -1,6 +1,16 @@
-class ExAPI():
+import threading
+
+
+class ExAPI(threading.Thread):
     curdepth = {}
     name = ''
+
+    def __init__(self, refresh_rate=0.0):
+        self.refresh_rate = refresh_rate
+        self.refresh_lock = threading.Lock()
+        self.last_update = 0.0
+        self.last_depth = None
+        self.depth = None
 
     def cipher_key(self, dummy=None):
         pass
