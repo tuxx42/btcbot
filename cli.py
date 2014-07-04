@@ -13,6 +13,7 @@ import exsimu
 import time
 import threading
 from depth import depth
+import depth_monitor
 from keymgt import KeyMgmt
 
 import logging
@@ -215,6 +216,12 @@ def handler(signum, frame):
 def main():
 #    start_depth_thread(markets['kraken'])
 #    start_depth_thread(markets['btce'])
+
+    sm = depth_monitor.spread_monitor(
+        markets['exsimu1'],
+        markets['exsimu2'],
+    )
+    sm.start()
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)

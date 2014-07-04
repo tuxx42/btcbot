@@ -74,4 +74,4 @@ class SpreadMonitor(threading.Thread):
             d2 = self.t2.get_depth()
             spread = depth.spread(d1.get(), d2.get())
             if spread['profitable']:
-                print spread
+                print(spread)

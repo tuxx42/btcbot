@@ -94,6 +94,9 @@ class depth(object):
             fees2     market2 fees
         """
 
+        log.debug('Calculating spread between: %s and %s',
+                  depth1, depth2)
+
         r = {}
 
         mina1 = depth1.get_min_ask()
