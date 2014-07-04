@@ -75,15 +75,15 @@ key_mgmt_btce = KeyMgmt(
     'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX'
 )
 markets = {
-    'kraken': kraken.kraken(key_mgmt_kraken),
-    'btce': btce.btce(key_mgmt_btce),
+    #'kraken': kraken.kraken(key_mgmt_kraken),
+    #'btce': btce.btce(key_mgmt_btce),
     'exsimu1': exsimu.exsimu('data1', 'exsimu1'),
     'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
 
 #   'cryptsy': cryptsy_api,
 
-markets['kraken'].decipher_key('kraken.enc')
+#markets['kraken'].decipher_key('kraken.enc')
 
 
 class Cli:
@@ -134,7 +134,10 @@ class MethodDispather():
         log.info('calculating spread between %s and %s',
                  api1, api2)
         try:
-            r = depth.spread(markets[api1], markets[api2], pair)
+            r = depth.spread(
+                markets[api1].depth(),
+                markets[api2].depth(),
+            )
             for k, v in r.items():
                 print('%s %s' % (k, v))
         except Exception as e:
@@ -217,10 +220,11 @@ def main():
 #    start_depth_thread(markets['kraken'])
 #    start_depth_thread(markets['btce'])
 
-    sm = depth_monitor.spread_monitor(
+    sm = depth_monitor.SpreadMonitor(
         markets['exsimu1'],
         markets['exsimu2'],
     )
+    sm.setDaemon(True)
     sm.start()
 
     cli = Cli(histfile, usage.keys())

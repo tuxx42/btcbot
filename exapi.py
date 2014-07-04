@@ -1,7 +1,7 @@
 import threading
 
 
-class ExAPI(threading.Thread):
+class ExAPI(object):
     curdepth = {}
     name = ''
 
@@ -36,5 +36,5 @@ class ExAPI(threading.Thread):
     def get_max_ask(self):
         return self.current_depth[-1][0].get_max_ask()
 
-    def get_depth(self, **kwargs):
+    def depth(self, **kwargs):
         pass

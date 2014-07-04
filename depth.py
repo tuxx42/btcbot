@@ -171,7 +171,7 @@ class depth(object):
             typ=trade.BID
         )
 
-        log.debug('BUY ORDER (%s) --> %s', trades['buy_api'], order_buy)
+        #log.debug('BUY ORDER (%s) --> %s', trades['buy_api'], order_buy)
 
         orders_sell = []
         vol = volume_to_trade
@@ -185,7 +185,7 @@ class depth(object):
             )
             orders_sell.append(order_sell)
             vol -= bid.volume
-            log.debug('SEL ORDER (%s) --> %s', trades['sel_api'], order_sell)
+            #log.debug('SEL ORDER (%s) --> %s', trades['sel_api'], order_sell)
             if vol <= 0.0:
                 break
 
@@ -199,9 +199,9 @@ class depth(object):
         r['profitable'] = r['profit_net'] > 0.0
 
         r['order_buy'] = order_buy
-        r['api_buy'] = trades['buy_api']
+        #r['api_buy'] = trades['buy_api']
         r['orders_sell'] = orders_sell
-        r['api_sell'] = trades['sel_api']
+        #r['api_sell'] = trades['sel_api']
 
         log.debug('Spread result %s', r)
 
