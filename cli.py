@@ -70,9 +70,10 @@ key_mgmt_kraken = KeyMgmt.from_file(
     padding=kraken.kraken.PADDING
 )
 
-key_mgmt_btce = KeyMgmt(
-    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
-    'XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX'
+key_mgmt_btce = KeyMgmt.from_file(
+    'btce.enc',
+    password='foobar',
+    padding=kraken.kraken.PADDING
 )
 markets = {
     #'kraken': kraken.kraken(key_mgmt_kraken),
@@ -129,6 +130,16 @@ class MethodDispather():
 #        print('btce')
 #        print('------')
 #        print(btce.btce.current_depth[-1])
+
+    def prof_orders(self, api1, api2):
+        r = depth.prof_orders(
+            markets[api1].depth().asks,
+            markets[api2].depth().bids,
+            markets[api1].fees,
+            markets[api2].fees,
+        )
+        print(repr(r))
+
 
     def spread(self, api1, api2, pair='btc_eur'):
         log.info('calculating spread between %s and %s',
@@ -220,12 +231,12 @@ def main():
 #    start_depth_thread(markets['kraken'])
 #    start_depth_thread(markets['btce'])
 
-    sm = depth_monitor.SpreadMonitor(
-        markets['exsimu1'],
-        markets['exsimu2'],
-    )
-    sm.setDaemon(True)
-    sm.start()
+#    sm = depth_monitor.SpreadMonitor(
+#        markets['exsimu1'],
+#        markets['exsimu2'],
+#    )
+#    sm.setDaemon(True)
+#    sm.start()
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)

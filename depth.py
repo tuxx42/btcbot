@@ -82,6 +82,55 @@ class depth(object):
         return weighted_value
 
     @staticmethod
+    def prof_orders(ask_depth, bid_depth, cb_ask_fees, cb_bid_fees):
+        # what we want to buy
+        our_ask = []
+        # what we want to sell
+        our_bid = []
+        bid_depth = list(reversed(bid_depth))
+
+        for idxa, ask in enumerate(ask_depth):
+            for idxb, bid in enumerate(bid_depth):
+                print('comparing', ask, bid)
+                if ask.value < bid.value:
+                    if ask.volume < bid.volume:
+                        print('reducing', bid, 'by vol', ask.volume)
+                        bid_depth[idxb].volume -= ask.volume
+                        bid.volume = ask.volume
+                        profit = bid.value * bid.volume - \
+                            ask.value * ask.volume
+                        fees_bid = bid.value * bid.volume * cb_bid_fees()
+                        fees_ask = ask.value * ask.volume * cb_ask_fees()
+                        fees = fees_bid + fees_ask
+                        print('profit:', profit, 'fees:',
+                              fees, 'diff:', profit - fees)
+                        # TODO sum volumes for same prices
+                        if profit - fees > 0.2:
+                            our_ask.append(bid)
+                            our_bid.append(ask)
+                        break
+                    elif ask.volume >= bid.volume:
+                        print('reducing', ask, 'by vol', bid.volume)
+                        our_bid.append(trade(ask.value,
+                                             bid.volume, typ=trade.ASK))
+                        ask.volume -= bid.volume
+                        print('removing', bid)
+                        profit = bid.value * bid.volume - \
+                            ask.value * ask.volume
+                        fees_bid = bid.value * bid.volume * cb_bid_fees()
+                        fees_ask = ask.value * ask.volume * cb_ask_fees()
+                        fees = fees_bid + fees_ask
+                        print('profit:', profit, 'fees:',
+                              fees, 'diff:', profit - fees)
+                        # TODO sum volumes or same prices
+                        if profit - fees > 0.2:
+                            bid_depth.remove(bid)
+                            our_ask.append(bid)
+                else:
+                    break
+        return [our_ask, our_bid]
+
+    @staticmethod
     #def spread(api1, api2, pair):
     def spread(depth1, depth2, fees1=0.02, fees2=0.02):
 
