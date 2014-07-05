@@ -33,7 +33,9 @@ class btce(ExAPI):
     def balance(self, dummy=None):
         balance = {}
         try:
-            result = self.api.getInfo()['return']['funds']
+            result = self.api.getInfo()
+            if result['success'] == 0:
+                return result['error']
             for s in ['btc', 'eur']:
                 balance[s] = result[s]
             return balance
