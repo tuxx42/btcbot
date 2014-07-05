@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import time
 log = logging.getLogger(__name__)
 
 
@@ -28,12 +29,16 @@ class trade(object):
         return self.value < other.value
 
     def __repr__(self):
-        r = self.typ and 'ask' or 'bid'
-        r += ' value(%f)' % self.value
-        r += ' vol(%f)' % self.volume
-        if self.timestamp:
-            r += ', time(%s)' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        r = '[%f, %f]' % (self.value, self.volume)
         return r
+
+#    def __repr__(self):
+#        r = self.typ and 'ask' or 'bid'
+#        r += ' value(%f)' % self.value
+#        r += ' vol(%f)' % self.volume
+#        if self.timestamp:
+#            r += ', time(%s)' % self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+#        return r
 
     @staticmethod
     def diff(t1, t2):
@@ -44,6 +49,7 @@ class trade(object):
 
 class depth(object):
     def __init__(self, asks=[], bids=[]):
+        self.time = time.time()
         self.asks = sorted(map(lambda t: trade(*t, typ=trade.ASK), asks))
         self.bids = sorted(map(lambda t: trade(*t, typ=trade.BID), bids))
 
@@ -82,19 +88,59 @@ class depth(object):
         return weighted_value
 
     @staticmethod
-    def prof_orders(ask_depth, bid_depth, cb_ask_fees, cb_bid_fees):
+    def prof_orders(depth1, depth2, cb_fees1, cb_fees2):
+        # TODO set global threshold value for profitable trades
+        #      (currently 0.2)
+
+        # make sure time of depths are not older than 1 second
+        if time.time() - depth1.time > 1:
+            log.error('depth information data too old %f',
+                      time.time() - depth1.time)
+            return {'asks': [], 'bids': [], 'profitable': False}
+        elif time.time() - depth2.time > 1:
+            log.error('depth information data too old %f',
+                      time.time() - depth1.time)
+            return {'asks': [], 'bids': [], 'profitable': False}
+
+        mina1 = depth1.get_min_ask()
+        maxb1 = depth1.get_max_bid()
+        log.debug('min ask 1: %s, max bid 1: %s', mina1, maxb1)
+
+        mina2 = depth2.get_min_ask()
+        maxb2 = depth2.get_max_bid()
+        log.debug('min ask 2: %s, max bid 2: %s', mina2, maxb2)
+
+        if mina1 < maxb2:
+            ask_depth = depth1.asks
+            bid_depth = depth2.bids
+            cb_ask_fees = cb_fees1
+            cb_bid_fees = cb_fees2
+        elif mina2 < maxb1:
+            ask_depth = depth2.asks
+            bid_depth = depth1.bids
+            cb_ask_fees = cb_fees2
+            cb_bid_fees = cb_fees1
+        else:
+            return {'asks': [], 'bids': [], 'profitable': False}
+
+        log.debug("ask_depth: %s", ask_depth)
+        log.debug("bid_depth: %s", bid_depth)
         # what we want to buy
         our_ask = []
         # what we want to sell
         our_bid = []
         bid_depth = list(reversed(bid_depth))
+        profitable = False
 
-        for idxa, ask in enumerate(ask_depth):
+        done = False
+        for ask in ask_depth:
+            if done:
+                break
             for idxb, bid in enumerate(bid_depth):
-                print('comparing', ask, bid)
+                log.debug('comparing %s <> %s', ask, bid)
                 if ask.value < bid.value:
                     if ask.volume < bid.volume:
-                        print('reducing', bid, 'by vol', ask.volume)
+                        log.debug('reducing %s by vol %f', bid, ask.volume)
                         bid_depth[idxb].volume -= ask.volume
                         bid.volume = ask.volume
                         profit = bid.value * bid.volume - \
@@ -102,162 +148,176 @@ class depth(object):
                         fees_bid = bid.value * bid.volume * cb_bid_fees()
                         fees_ask = ask.value * ask.volume * cb_ask_fees()
                         fees = fees_bid + fees_ask
-                        print('profit:', profit, 'fees:',
-                              fees, 'diff:', profit - fees)
+                        log.debug('profit: %f, fees: %f, diff: %f',
+                                  profit, fees, profit - fees)
                         # TODO sum volumes for same prices
-                        if profit - fees > 0.2:
+                        if profit - fees > 0.0:
+                            log.debug('appending to our_ask %s', bid)
                             our_ask.append(bid)
+                            log.debug('appending to our_bid %s', ask)
                             our_bid.append(ask)
+                            profitable = True
+                        else:
+                            done = True
                         break
                     elif ask.volume >= bid.volume:
-                        print('reducing', ask, 'by vol', bid.volume)
-                        our_bid.append(trade(ask.value,
-                                             bid.volume, typ=trade.ASK))
+                        log.debug('reducing %s by vol %f', ask, bid.volume)
+                        nbid = trade(ask.value, bid.volume, typ=trade.ASK)
+                        log.debug('appending to our_bid %s', nbid)
+                        our_bid.append(nbid)
                         ask.volume -= bid.volume
-                        print('removing', bid)
+                        log.debug('removing %s', bid)
                         profit = bid.value * bid.volume - \
-                            ask.value * ask.volume
+                            ask.value * bid.volume
                         fees_bid = bid.value * bid.volume * cb_bid_fees()
-                        fees_ask = ask.value * ask.volume * cb_ask_fees()
+                        fees_ask = ask.value * bid.volume * cb_ask_fees()
                         fees = fees_bid + fees_ask
-                        print('profit:', profit, 'fees:',
-                              fees, 'diff:', profit - fees)
+                        log.debug('profit: %f, fees: %f, diff: %f',
+                                  profit, fees, profit - fees)
                         # TODO sum volumes or same prices
-                        if profit - fees > 0.2:
+                        if profit - fees > 0.0:
                             bid_depth.remove(bid)
                             our_ask.append(bid)
+                            log.debug('appending to our_ask %s', bid)
+                            profitable = True
+                        else:
+                            done = True
                 else:
                     break
-        return [our_ask, our_bid]
 
-    @staticmethod
-    #def spread(api1, api2, pair):
-    def spread(depth1, depth2, fees1=0.02, fees2=0.02):
+        if profitable:
+            assert(len(our_ask) > 0 and len(our_bid) > 0)
 
-        """
-        get price spread across two markets
-        Input:
-            depth1    market1 depth
-            depth2    market2 depth
-            fees1     market1 fees
-            fees2     market2 fees
-        """
+        return {'asks': our_ask, 'bids': our_bid, 'profitable': profitable}
 
-        log.debug('Calculating spread between: %s and %s',
-                  depth1, depth2)
-
-        r = {}
-
-        mina1 = depth1.get_min_ask()
-        maxb1 = depth1.get_max_bid()
-        log.debug('Min Ask 1: %s', mina1)
-        log.debug('Max Bid 1: %s', maxb1)
-
-        mina2 = depth2.get_min_ask()
-        maxb2 = depth2.get_max_bid()
-        log.debug('Min Ask 2: %s', mina2)
-        log.debug('Max Bid 2: %s', maxb2)
-
-        # mininum sell price (ask) on api1 is lower than maximum buy price
-        # (bid) on api2
-        # => buy from 1 all lower priced asks than maximum bid on 2
-        # => sell on 2 all higher priced bids than minimum ask on 1
-        if mina1 < maxb2:
-            #print('buy from api1 sell api2')
-            trades = {
-                #'buy_api': api1,
-                #'sel_api': api2,
-                'direction': 1,
-                'we_buy': depth1.get_asks_lower(maxb2),
-                'we_sell': depth2.get_bids_higher(mina1),
-                'max_bid': maxb2,
-                'min_ask': mina1,
-            }
-            sell_fees = fees2
-            buy_fees = fees1
-        elif mina2 < maxb1:
-            #print('buy from api2 sell api1')
-            trades = {
-                #'buy_api': api2,
-                #'sel_api': api1,
-                'direction': -1,
-                'we_buy': depth2.get_asks_lower(maxb1),
-                'we_sell': depth1.get_bids_higher(mina2),
-                'max_bid': maxb1,
-                'min_ask': mina2,
-            }
-            sell_fees = fees1
-            buy_fees = fees2
-        else:
-            r['profitable'] = False
-            return r
-
-        log.debug('BUY: %s', trades['we_buy'])
-        log.debug('SELL: %s', trades['we_sell'])
-
-        volume_to_sell = sum(
-            map(lambda t: t.volume, trades['we_sell']))
-        volume_to_buy = sum(
-            map(lambda t: t.volume, trades['we_buy']))
-        volume_to_trade = min(volume_to_sell, volume_to_buy)
-
-        weighted_value_buy = depth1.get_weighted_price(
-            trades['we_buy'], volume_to_trade)
-
-        weighted_value_sell = depth1.get_weighted_price(
-            reversed(trades['we_sell']), volume_to_trade)
-
-        log.debug('weighted_value_buy %f * vol %f = price %f' % (
-            weighted_value_buy, volume_to_trade,
-            weighted_value_buy * volume_to_trade))
-        log.debug('weighted_value_sell %f * vol %f = price %f' % (
-            weighted_value_sell, volume_to_trade,
-            weighted_value_sell * volume_to_trade))
-
-        order_buy = trade(
-            value=trades['max_bid'].value,
-            volume=volume_to_trade,
-            typ=trade.BID
-        )
-
-        #log.debug('BUY ORDER (%s) --> %s', trades['buy_api'], order_buy)
-
-        orders_sell = []
-        vol = volume_to_trade
-        for bid in reversed(trades['we_sell']):
-            if vol < bid.volume:
-                bid.volume = vol
-            order_sell = trade(
-                value=bid.value,
-                volume=bid.volume,
-                typ=trade.ASK
-            )
-            orders_sell.append(order_sell)
-            vol -= bid.volume
-            #log.debug('SEL ORDER (%s) --> %s', trades['sel_api'], order_sell)
-            if vol <= 0.0:
-                break
-
-        r['profit_gross'] = (weighted_value_sell - weighted_value_buy) * \
-            volume_to_trade
-
-        fees = weighted_value_sell * volume_to_trade * sell_fees
-        fees += weighted_value_buy * volume_to_trade * buy_fees
-
-        r['profit_net'] = r['profit_gross'] - fees
-        r['profitable'] = r['profit_net'] > 0.0
-
-        r['order_buy'] = order_buy
-        #r['api_buy'] = trades['buy_api']
-        r['orders_sell'] = orders_sell
-        #r['api_sell'] = trades['sel_api']
-
-        log.debug('Spread result %s', r)
-
-        if r['profitable']:
-            log.info(' -----> PROFIT: %s', r)
-
-        return (r)
+#    @staticmethod
+#    #def spread(api1, api2, pair):
+#    def spread(depth1, depth2, fees1=0.02, fees2=0.02):
+#
+#        """
+#        get price spread across two markets
+#        Input:
+#            depth1    market1 depth
+#            depth2    market2 depth
+#            fees1     market1 fees
+#            fees2     market2 fees
+#        """
+#
+#        log.debug('Calculating spread between: %s and %s',
+#                  depth1, depth2)
+#
+#        r = {}
+#
+#        mina1 = depth1.get_min_ask()
+#        maxb1 = depth1.get_max_bid()
+#        log.debug('Min Ask 1: %s', mina1)
+#        log.debug('Max Bid 1: %s', maxb1)
+#
+#        mina2 = depth2.get_min_ask()
+#        maxb2 = depth2.get_max_bid()
+#        log.debug('Min Ask 2: %s', mina2)
+#        log.debug('Max Bid 2: %s', maxb2)
+#
+#        # mininum sell price (ask) on api1 is lower than maximum buy price
+#        # (bid) on api2
+#        # => buy from 1 all lower priced asks than maximum bid on 2
+#        # => sell on 2 all higher priced bids than minimum ask on 1
+#        if mina1 < maxb2:
+#            #print('buy from api1 sell api2')
+#            trades = {
+#                #'buy_api': api1,
+#                #'sel_api': api2,
+#                'direction': 1,
+#                'we_buy': depth1.get_asks_lower(maxb2),
+#                'we_sell': depth2.get_bids_higher(mina1),
+#                'max_bid': maxb2,
+#                'min_ask': mina1,
+#            }
+#            sell_fees = fees2
+#            buy_fees = fees1
+#        elif mina2 < maxb1:
+#            #print('buy from api2 sell api1')
+#            trades = {
+#                #'buy_api': api2,
+#                #'sel_api': api1,
+#                'direction': -1,
+#                'we_buy': depth2.get_asks_lower(maxb1),
+#                'we_sell': depth1.get_bids_higher(mina2),
+#                'max_bid': maxb1,
+#                'min_ask': mina2,
+#            }
+#            sell_fees = fees1
+#            buy_fees = fees2
+#        else:
+#            r['profitable'] = False
+#            return r
+#
+#        log.debug('BUY: %s', trades['we_buy'])
+#        log.debug('SELL: %s', trades['we_sell'])
+#
+#        volume_to_sell = sum(
+#            map(lambda t: t.volume, trades['we_sell']))
+#        volume_to_buy = sum(
+#            map(lambda t: t.volume, trades['we_buy']))
+#        volume_to_trade = min(volume_to_sell, volume_to_buy)
+#
+#        weighted_value_buy = depth1.get_weighted_price(
+#            trades['we_buy'], volume_to_trade)
+#
+#        weighted_value_sell = depth1.get_weighted_price(
+#            reversed(trades['we_sell']), volume_to_trade)
+#
+#        log.debug('weighted_value_buy %f * vol %f = price %f' % (
+#            weighted_value_buy, volume_to_trade,
+#            weighted_value_buy * volume_to_trade))
+#        log.debug('weighted_value_sell %f * vol %f = price %f' % (
+#            weighted_value_sell, volume_to_trade,
+#            weighted_value_sell * volume_to_trade))
+#
+#        order_buy = trade(
+#            value=trades['max_bid'].value,
+#            volume=volume_to_trade,
+#            typ=trade.BID
+#        )
+#
+#        #log.debug('BUY ORDER (%s) --> %s', trades['buy_api'], order_buy)
+#
+#        orders_sell = []
+#        vol = volume_to_trade
+#        for bid in reversed(trades['we_sell']):
+#            if vol < bid.volume:
+#                bid.volume = vol
+#            order_sell = trade(
+#                value=bid.value,
+#                volume=bid.volume,
+#                typ=trade.ASK
+#            )
+#            orders_sell.append(order_sell)
+#            vol -= bid.volume
+#            #log.debug('SEL ORDER (%s) --> %s', trades['sel_api'], order_sell)
+#            if vol <= 0.0:
+#                break
+#
+#        r['profit_gross'] = (weighted_value_sell - weighted_value_buy) * \
+#            volume_to_trade
+#
+#        fees = weighted_value_sell * volume_to_trade * sell_fees
+#        fees += weighted_value_buy * volume_to_trade * buy_fees
+#
+#        r['profit_net'] = r['profit_gross'] - fees
+#        r['profitable'] = r['profit_net'] > 0.0
+#
+#        r['order_buy'] = order_buy
+#        #r['api_buy'] = trades['buy_api']
+#        r['orders_sell'] = orders_sell
+#        #r['api_sell'] = trades['sel_api']
+#
+#        log.debug('Spread result %s', r)
+#
+#        if r['profitable']:
+#            log.info(' -----> PROFIT: %s', r)
+#
+#        return (r)
 
     def __repr__(self):
         r = ''

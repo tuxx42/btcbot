@@ -37,12 +37,13 @@ class btce(ExAPI):
             if result['success'] == 0:
                 return result['error']
             for s in ['btc', 'eur']:
-                balance[s] = result[s]
+                balance[s] = result['return']['funds'][s]
             return balance
         except Exception as e:
             print(e)
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
+        return 'blocked'
         try:
             result = self.api.Trade(tpair=pair,
                                     ttype=order,

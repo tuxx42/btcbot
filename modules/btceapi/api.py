@@ -52,8 +52,11 @@ class API:
         return data
 
     def get_param(self, couple, param):
-        conn = http.client.HTTPSConnection("btc-e.com")
-        conn.request("GET", "/api/2/" + couple + "/" + param)
+        try:
+            conn = http.client.HTTPSConnection("btc-e.com")
+            conn.request("GET", "/api/2/" + couple + "/" + param)
+        except:
+            raise Exception('could not read depth information from btc-e')
         response = conn.getresponse().read().decode()
         data = json.loads(response)
         conn.close()

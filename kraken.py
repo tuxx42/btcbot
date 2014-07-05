@@ -46,6 +46,7 @@ class kraken(ExAPI):
             return balance
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
+        return 'blocked'
         getpair = kraken.pairs[pair]
         try:
             res = self.k.query_private('AddOrder',
@@ -92,9 +93,10 @@ class kraken(ExAPI):
                                    {'txid': orderid})
         return res
 
-    def depth(self, pair='btc_eur', count=20):
+    def depth(self, pair='btc_eur', count=10):
         try:
-            s = self.k.query_public('Depth', {'pair': kraken.pairs[pair]})
+            s = self.k.query_public('Depth', {'pair': kraken.pairs[pair],
+                                              'count': count})
         except Exception as e:
             log.exception(e)
             raise

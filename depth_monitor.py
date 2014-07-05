@@ -18,7 +18,7 @@ class AsyncResult(threading.Thread):
     def run(self):
         log.debug('Async result on %s', self.callback)
         self.result = self.callback()
-        log.debug('Async result %s retrieved', self.result)
+#        log.debug('Async result %s retrieved', self.result)
         self.done.acquire()
         self.done.notify()
         self.done.release()
@@ -59,7 +59,7 @@ class Monitor(threading.Thread):
                 func = cmd.pop()
                 log.debug('Calling %s', repr(func))
                 res = func(*cmd)
-                log.debug('GOT RESULT: %s', res)
+                #log.debug('GOT RESULT: %s', res)
                 self.res_q.put(res)
                 self.cmd_q.task_done()
             except queue.Empty:
@@ -71,7 +71,7 @@ class SpreadMonitor(threading.Thread):
     def __init__(self,
                  api1,
                  api2,
-                 interval=5,
+                 interval=1,
                  ):
 
         super(SpreadMonitor, self).__init__()
@@ -98,9 +98,13 @@ class SpreadMonitor(threading.Thread):
             try:
                 d1 = self.t1.get_depth()
                 d2 = self.t2.get_depth()
-                spread = depth.depth.spread(d1.get(), d2.get())
+                spread = depth.depth.prof_orders(d1.get(),
+                                                 d2.get(),
+                                                 self.api1.fees,
+                                                 self.api2.fees)
+                log.debug(spread)
                 if spread['profitable']:
-                    print(spread)
+                    print(time.time(), spread)
             except queue.Empty:
                 pass
             time.sleep(self.interval)

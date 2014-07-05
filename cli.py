@@ -76,8 +76,8 @@ key_mgmt_btce = KeyMgmt.from_file(
     padding=kraken.kraken.PADDING
 )
 markets = {
-    #'kraken': kraken.kraken(key_mgmt_kraken),
-    #'btce': btce.btce(key_mgmt_btce),
+    'kraken': kraken.kraken(key_mgmt_kraken),
+    'btce': btce.btce(key_mgmt_btce),
     'exsimu1': exsimu.exsimu('data1', 'exsimu1'),
     'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
@@ -133,27 +133,12 @@ class MethodDispather():
 
     def prof_orders(self, api1, api2):
         r = depth.prof_orders(
-            markets[api1].depth().asks,
-            markets[api2].depth().bids,
+            markets[api1].depth(),
+            markets[api2].depth(),
             markets[api1].fees,
             markets[api2].fees,
         )
-        print(repr(r))
-
-
-    def spread(self, api1, api2, pair='btc_eur'):
-        log.info('calculating spread between %s and %s',
-                 api1, api2)
-        try:
-            r = depth.spread(
-                markets[api1].depth(),
-                markets[api2].depth(),
-            )
-            for k, v in r.items():
-                print('%s %s' % (k, v))
-        except Exception as e:
-            print (e)
-            log.exception(e)
+        return (repr(r))
 
     def exit(self, params=None):
         print ('goodbye.')
@@ -231,12 +216,12 @@ def main():
 #    start_depth_thread(markets['kraken'])
 #    start_depth_thread(markets['btce'])
 
-#    sm = depth_monitor.SpreadMonitor(
-#        markets['exsimu1'],
-#        markets['exsimu2'],
-#    )
-#    sm.setDaemon(True)
-#    sm.start()
+    sm = depth_monitor.SpreadMonitor(
+        markets['kraken'],
+        markets['btce'],
+    )
+    sm.setDaemon(True)
+    sm.start()
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)
