@@ -152,7 +152,7 @@ class depth(object):
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
                         # TODO sum volumes for same prices
-                        if profit - fees > 0.2:
+                        if profit - fees > 0:
                             log.debug('appending to our_ask %s', bid)
                             our_ask.append(trade(bid.value,
                                                  ask.volume, typ=trade.BID))
@@ -179,7 +179,7 @@ class depth(object):
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
                         # TODO sum volumes or same prices
-                        if profit - fees > 0.2:
+                        if profit - fees > 0:
                             bid_depth.remove(bid)
                             our_ask.append(bid)
                             log.debug('appending to our_ask %s', bid)
@@ -193,7 +193,8 @@ class depth(object):
         if profitable:
             assert(len(our_ask) > 0 and len(our_bid) > 0)
 
-        return {'asks': our_ask, 'bids': our_bid, 'profitable': profitable}
+        return {'asks': our_ask, 'bids': our_bid,
+                'profitable': profitable, 'totalprofit': total_profit}
 
 #    @staticmethod
 #    #def spread(api1, api2, pair):
