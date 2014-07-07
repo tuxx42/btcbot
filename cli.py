@@ -180,6 +180,8 @@ class MethodDispather():
     def call(self, params=None):
         log.debug('calling %s', params)
         try:
+            if not params:
+                return None
             modulefunc = params[0].split('.')
             if len(modulefunc) > 1:
                 params[0] = params[0].split('.', 1)[1]
@@ -217,11 +219,13 @@ def main():
 #    start_depth_thread(markets['btce'])
 
     sm = depth_monitor.SpreadMonitor(
-        markets['kraken'],
-        markets['btce'],
+        markets['exsimu1'],
+        markets['exsimu2'],
     )
+#        markets['kraken'],
+#        markets['btce'],
     sm.setDaemon(True)
-    sm.start()
+    #sm.start()
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)

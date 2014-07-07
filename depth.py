@@ -131,6 +131,7 @@ class depth(object):
         our_bid = []
         bid_depth = list(reversed(bid_depth))
         profitable = False
+        total_profit = 0
 
         done = False
         for ask in ask_depth:
@@ -151,12 +152,13 @@ class depth(object):
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
                         # TODO sum volumes for same prices
-                        if profit - fees > 0.0:
+                        if profit - fees > 0.2:
                             log.debug('appending to our_ask %s', bid)
                             our_ask.append(bid)
                             log.debug('appending to our_bid %s', ask)
                             our_bid.append(ask)
                             profitable = True
+                            total_profit += profit - fees
                         else:
                             done = True
                         break
@@ -175,11 +177,12 @@ class depth(object):
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
                         # TODO sum volumes or same prices
-                        if profit - fees > 0.0:
+                        if profit - fees > 0.2:
                             bid_depth.remove(bid)
                             our_ask.append(bid)
                             log.debug('appending to our_ask %s', bid)
                             profitable = True
+                            total_profit += profit - fees
                         else:
                             done = True
                 else:
