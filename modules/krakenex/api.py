@@ -98,18 +98,21 @@ class API:
         """
         url = self.uri + urlpath
 
-        while True:
-            if conn is None:
-                if self.conn is None:
-                    conn = connection.Connection()
-                else:
-                    conn = self.conn
+        if conn is None:
+            if self.conn is None:
+                conn = connection.Connection()
+            else:
+                conn = self.conn
 
+        while True:
             try:
                 ret = conn._request(url, req, headers)
                 return json.loads(ret)
             except Exception as e:
                 log.error('Error retrieving data from kraken: %s', e)
+                if conn:
+                    conn.close()
+                conn = connection.Connection()
             time.sleep(RETRY_INTERVAL)
         return {}
 
