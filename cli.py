@@ -219,13 +219,13 @@ def main():
 #    start_depth_thread(markets['btce'])
 
     sm = depth_monitor.SpreadMonitor(
-        markets['exsimu1'],
-        markets['exsimu2'],
+        markets['kraken'],
+        markets['btce'],
     )
-#        markets['kraken'],
-#        markets['btce'],
     sm.setDaemon(True)
-    #sm.start()
+    sm.start()
+#        markets['exsimu1'],
+#        markets['exsimu2'],
 
     cli = Cli(histfile, usage.keys())
     methods = MethodDispather(cli.values)

@@ -143,10 +143,10 @@ class depth(object):
                     if ask.volume < bid.volume:
                         log.debug('reducing %s by vol %f', bid, ask.volume)
                         bid_depth[idxb].volume -= ask.volume
-                        bid.volume = ask.volume
-                        profit = bid.value * bid.volume - \
+                        #bid.volume = ask.volume
+                        profit = bid.value * ask.volume - \
                             ask.value * ask.volume
-                        fees_bid = bid.value * bid.volume * cb_bid_fees()
+                        fees_bid = bid.value * ask.volume * cb_bid_fees()
                         fees_ask = ask.value * ask.volume * cb_ask_fees()
                         fees = fees_bid + fees_ask
                         log.debug('profit: %f, fees: %f, diff: %f',
@@ -154,9 +154,11 @@ class depth(object):
                         # TODO sum volumes for same prices
                         if profit - fees > 0.2:
                             log.debug('appending to our_ask %s', bid)
-                            our_ask.append(bid)
+                            our_ask.append(trade(bid.value,
+                                                 ask.volume, typ=trade.BID))
                             log.debug('appending to our_bid %s', ask)
-                            our_bid.append(ask)
+                            our_bid.append(trade(ask.value,
+                                                 ask.volume, typ=trade.ASK))
                             profitable = True
                             total_profit += profit - fees
                         else:
@@ -164,9 +166,9 @@ class depth(object):
                         break
                     elif ask.volume >= bid.volume:
                         log.debug('reducing %s by vol %f', ask, bid.volume)
-                        nbid = trade(ask.value, bid.volume, typ=trade.ASK)
-                        log.debug('appending to our_bid %s', nbid)
-                        our_bid.append(nbid)
+                        our_bid.append(trade(ask.value,
+                                             bid.volume, typ=trade.ASK))
+                        log.debug('appending to our_bid %s', our_bid[-1])
                         ask.volume -= bid.volume
                         log.debug('removing %s', bid)
                         profit = bid.value * bid.volume - \
