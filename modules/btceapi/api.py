@@ -12,6 +12,11 @@ import json
 import hashlib
 import hmac
 import time
+import logging
+log = logging.getLogger(__name__)
+
+
+RETRY_INTERVAL = 0.1
 
 
 class API:
@@ -25,6 +30,8 @@ class API:
         self.__api_key = api_key
         self.__api_secret = api_secret
         self.__wait_for_nonce = wait_for_nonce
+        #self.__uri = '127.0.0.1'
+        self.__uri = 'btc-e.com'
 
     def __nonce(self):
         if self.__wait_for_nonce:
@@ -44,23 +51,32 @@ class API:
         headers = {"Content-type": "application/x-www-form-urlencoded",
                    "Key": self.__api_key,
                    "Sign": self.__signature(params)}
-        conn = http.client.HTTPSConnection("btc-e.com")
-        conn.request("POST", "/tapi", params, headers)
-        response = conn.getresponse().read().decode()
-        data = json.loads(response)
-        conn.close()
-        return data
+        while True:
+            try:
+                conn = http.client.HTTPSConnection(self.__uri)
+                conn.request("POST", "/tapi", params, headers)
+                response = conn.getresponse().read().decode()
+                data = json.loads(response)
+                conn.close()
+                return data
+            except Exception as e:
+                log.error('Error retrieving data from btce: %s', e)
+            time.sleep(RETRY_INTERVAL)
+        return ''
 
     def get_param(self, couple, param):
-        try:
-            conn = http.client.HTTPSConnection("btc-e.com")
-            conn.request("GET", "/api/2/" + couple + "/" + param)
-        except:
-            raise Exception('could not read depth information from btc-e')
-        response = conn.getresponse().read().decode()
-        data = json.loads(response)
-        conn.close()
-        return data
+        while True:
+            try:
+                conn = http.client.HTTPSConnection(self.__uri)
+                conn.request("GET", "/api/2/" + couple + "/" + param)
+                response = conn.getresponse().read().decode()
+                data = json.loads(response)
+                conn.close()
+                return data
+            except Exception as e:
+                log.error('Error retrieving data from btce: %s', e)
+            time.sleep(RETRY_INTERVAL)
+        return ''
 
     def getInfo(self):
         return self.__api_call('getInfo', {})

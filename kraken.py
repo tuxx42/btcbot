@@ -18,7 +18,7 @@ class kraken(ExAPI):
     pairs['eur'] = 'ZEUR'
 
     def __init__(self, key_mgmt):
-        self.k = modules.krakenex.API(
+        self.kraken = modules.krakenex.API(
             key=key_mgmt.key,
             secret=key_mgmt.secret,
         )
@@ -34,7 +34,7 @@ class kraken(ExAPI):
             raise Exception('invalid pair')
 
     def balance(self, dummy=None):
-        s = self.k.query_private('Balance')
+        s = self.kraken.query_private('Balance')
         if s['error']:
             print ("an error occured while getting the account balance: %s" %
                    s['error'])
@@ -49,7 +49,7 @@ class kraken(ExAPI):
         return 'blocked'
         getpair = kraken.pairs[pair]
         try:
-            res = self.k.query_private('AddOrder',
+            res = self.kraken.query_private('AddOrder',
                                        {'pair': getpair,
                                         'type': order,
                                         'ordertype': ordertype,
@@ -66,7 +66,7 @@ class kraken(ExAPI):
 
     def trades(self, **kwargs):
         try:
-            s = self.k.query_public('Trades', kwargs)
+            s = self.kraken.query_public('Trades', kwargs)
         except:
             print ("unable to get trades")
             raise Exception
@@ -76,26 +76,26 @@ class kraken(ExAPI):
         print(s['result'])
 
     def active_orders(self):
-        res = self.k.query_private('OpenOrders')
+        res = self.kraken.query_private('OpenOrders')
         return res
 
     def closed_orders(self):
-        res = self.k.query_private('ClosedOrders')
+        res = self.kraken.query_private('ClosedOrders')
         return res
 
     def query_order(self, order_id):
-        res = self.k.query_private('QueryOrders',
+        res = self.kraken.query_private('QueryOrders',
                                    {'txid': order_id})
         return res
 
     def cancel_order(self, orderid):
-        res = self.k.query_private('CancelOrder',
+        res = self.kraken.query_private('CancelOrder',
                                    {'txid': orderid})
         return res
 
     def depth(self, pair='btc_eur', count=10):
         try:
-            s = self.k.query_public('Depth', {'pair': kraken.pairs[pair],
+            s = self.kraken.query_public('Depth', {'pair': kraken.pairs[pair],
                                               'count': count})
         except Exception as e:
             log.exception(e)

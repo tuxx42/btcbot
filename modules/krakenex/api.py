@@ -25,8 +25,14 @@ import time
 import hashlib
 import hmac
 import base64
+import time
+import logging
+log = logging.getLogger(__name__)
 
 from modules.krakenex import connection
+
+
+RETRY_INTERVAL = 0.1
 
 
 class API:
@@ -52,6 +58,7 @@ class API:
         """
         self.key = key
         self.secret = secret
+        #self.uri = 'https://127.0.0.1'
         self.uri = 'https://api.kraken.com'
         self.apiversion = '0'
         self.conn = conn
@@ -91,14 +98,20 @@ class API:
         """
         url = self.uri + urlpath
 
-        if conn is None:
-            if self.conn is None:
-                conn = connection.Connection()
-            else:
-                conn = self.conn
+        while True:
+            if conn is None:
+                if self.conn is None:
+                    conn = connection.Connection()
+                else:
+                    conn = self.conn
 
-        ret = conn._request(url, req, headers)
-        return json.loads(ret)
+            try:
+                ret = conn._request(url, req, headers)
+                return json.loads(ret)
+            except Exception as e:
+                log.error('Error retrieving data from kraken: %s', e)
+            time.sleep(RETRY_INTERVAL)
+        return {}
 
 
     def query_public(self, method, req = {}, conn = None):
