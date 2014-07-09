@@ -92,15 +92,17 @@ class depth(object):
         # TODO set global threshold value for profitable trades
         #      (currently 0.2)
 
+        res = {'asks': [], 'bids': [], 'profitable': False}
+
         # make sure time of depths are not older than 1 second
         if time.time() - depth1.time > 1:
             log.error('depth information data too old %f',
                       time.time() - depth1.time)
-            return {'asks': [], 'bids': [], 'profitable': False}
+            return res
         elif time.time() - depth2.time > 1:
             log.error('depth information data too old %f',
                       time.time() - depth1.time)
-            return {'asks': [], 'bids': [], 'profitable': False}
+            return res
 
         mina1 = depth1.get_min_ask()
         maxb1 = depth1.get_max_bid()
@@ -121,7 +123,7 @@ class depth(object):
             cb_ask_fees = cb_fees2
             cb_bid_fees = cb_fees1
         else:
-            return {'asks': [], 'bids': [], 'profitable': False}
+            return res
 
         log.debug("ask_depth: %s", ask_depth)
         log.debug("bid_depth: %s", bid_depth)
@@ -130,7 +132,6 @@ class depth(object):
         # what we want to sell
         our_bid = []
         bid_depth = list(reversed(bid_depth))
-        profitable = False
         total_profit = 0
 
         done = False
@@ -143,7 +144,6 @@ class depth(object):
                     if ask.volume < bid.volume:
                         log.debug('reducing %s by vol %f', bid, ask.volume)
                         bid_depth[idxb].volume -= ask.volume
-                        #bid.volume = ask.volume
                         profit = bid.value * ask.volume - \
                             ask.value * ask.volume
                         fees_bid = bid.value * ask.volume * cb_bid_fees()
@@ -153,24 +153,21 @@ class depth(object):
                                   profit, fees, profit - fees)
                         # TODO sum volumes for same prices
                         if profit - fees > 0:
-                            log.debug('appending to our_ask %s', bid)
-                            our_ask.append(trade(bid.value,
-                                                 ask.volume, typ=trade.BID))
-                            log.debug('appending to our_bid %s', ask)
                             our_bid.append(trade(ask.value,
                                                  ask.volume, typ=trade.ASK))
-                            profitable = True
+                            log.debug('appending to our_bid %s', our_bid[-1])
+                            our_ask.append(trade(bid.value,
+                                                 ask.volume, typ=trade.BID))
+                            log.debug('appending to our_ask %s', our_ask[-1])
+                            res['profitable'] = True
                             total_profit += profit - fees
                         else:
                             done = True
+                        # goto next ask
                         break
                     elif ask.volume >= bid.volume:
                         log.debug('reducing %s by vol %f', ask, bid.volume)
-                        our_bid.append(trade(ask.value,
-                                             bid.volume, typ=trade.ASK))
-                        log.debug('appending to our_bid %s', our_bid[-1])
                         ask.volume -= bid.volume
-                        log.debug('removing %s', bid)
                         profit = bid.value * bid.volume - \
                             ask.value * bid.volume
                         fees_bid = bid.value * bid.volume * cb_bid_fees()
@@ -180,21 +177,51 @@ class depth(object):
                                   profit, fees, profit - fees)
                         # TODO sum volumes or same prices
                         if profit - fees > 0:
+                            our_bid.append(trade(ask.value,
+                                                 bid.volume, typ=trade.ASK))
+                            log.debug('appending to our_bid %s', our_bid[-1])
+                            our_ask.append(trade(bid.value,
+                                                 bid.volume, type=trade.BID))
+                            log.debug('appending to our_ask %s', our_ask[-1])
+                            log.debug('removing %s', bid)
                             bid_depth.remove(bid)
-                            our_ask.append(bid)
-                            log.debug('appending to our_ask %s', bid)
-                            profitable = True
+                            res['profitable'] = True
                             total_profit += profit - fees
                         else:
                             done = True
+                        # continue checking next bid
                 else:
                     break
 
-        if profitable:
-            assert(len(our_ask) > 0 and len(our_bid) > 0)
+        # sanity check
+        if res['profitable']:
+            res['asks'] = our_ask
+            res['bids'] = our_bid
+            res['total_profit'] = total_profit
+            #assert(len(our_ask) > 0 and len(our_bid) > 0)
+            ask_volume = 0.0
+            ask_price_avg = 0.0
+            bid_volume = 0.0
+            bid_price_avg = 0.0
+            for i in our_ask:
+                ask_volume += i.volume
+                ask_price_avg += i.value * i.volume
+            for i in our_bid:
+                bid_volume += i.volume
+                bid_price_avg += i.value * i.volume
+            if ask_price_avg < bid_price_avg:
+                log.error("DEPTH ERROR: our_ask_price: %f, our_bid_price: %f",
+                          ask_price_avg, bid_price_avg)
+                res['error'] = "average ask price is not larger than bid price"
+            if ask_volume != bid_volume:
+                log.error("DEPTH ERROR: ask_volume: %f, bid_volume: %f",
+                          ask_volume, bid_volume)
+                res['error'] = "ask and bid volume not equivalent"
+            if not total_profit > 0:
+                log.error("DEPTH ERROR: total_profit is negative")
+                res['error'] = "total profit is negative"
 
-        return {'asks': our_ask, 'bids': our_bid,
-                'profitable': profitable, 'totalprofit': total_profit}
+        return res
 
 #    @staticmethod
 #    #def spread(api1, api2, pair):
