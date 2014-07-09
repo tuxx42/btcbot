@@ -1,67 +1,27 @@
 #!/usr/bin/env python3
 
-import atexit
-import readline
-import signal
-import sys
+import cmd
 import os
-#import plot
+import readline
 import kraken
 import btce
 import exsimu
-#import cryptsy
-import time
-import threading
+import atexit
 from depth import depth
 import depth_monitor
 from keymgt import KeyMgmt
 
 import logging
-logging.basicConfig(filename='/tmp/bot.log', level=logging.DEBUG,
+logging.basicConfig(filename='/tmp/bot.log',
+                    level=logging.DEBUG,
                     format='%(asctime)s.%(msecs)d %(levelname)s' +
                     '%(module)s - %(funcName)s: %(message)s',
                     datefmt="%Y-%m-%d %H:%M:%S")
 log = logging.getLogger('cli')
 
 version = "0.1 beta"
-prompt = "bot > "
+prompt = "(Cmd) "
 histfile = "/tmp/history"
-usage = {'exit': 'exit terminal',
-         'help': 'show this message',
-         'version': 'show version',
-         'echo': 'echo messsage',
-         'showmods': 'show modules',
-         'load': 'load module',
-         'plot': 'plot data',
-         'kraken.balance': 'get balance from kraken',
-         'kraken.depth': 'get depth from kraken',
-         'kraken.add_order': 'add an order in kraken',
-         'spread': 'get spread e.g: bot> spread api1=btce api2=kraken',
-         'btce.add_order': 'add an order in btc-e',
-         'btce.balance': 'get balance from btc-e',
-         'btce.depth': 'get depth from btc-e',
-         'exsimu1.add_order': 'add an order in btc-e (price, vol, order)',
-         'exsimu1.fees': 'get exchange fees',
-         'exsimu1.balance': 'get balance from simulator',
-         'exsimu1.depth': 'get depth from simulator',
-         'exsimu1.active_orders': 'get active orders',
-         'exsimu1.cancel_orders': 'cancel active order',
-         'exsimu1.trade_history': 'get trade history',
-         'exsimu1.modify_balance': 'set currency balance in sim (cur, amount)'
-         }
-
-
-def get_depth(callback, callback_args, interval):
-    while True:
-        callback(**callback_args)
-        time.sleep(interval)
-
-
-def start_depth_thread(api):
-    t = threading.Thread(target=get_depth,
-                         args=[api.get_depth, {}, 1])
-    t.setDaemon(True)
-    t.start()
 
 
 key_mgmt_kraken = KeyMgmt.from_file(
@@ -82,91 +42,63 @@ markets = {
     'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
 
-#   'cryptsy': cryptsy_api,
+global_vars = [
+    'depth_monitor_timeout=',
+    'depth_profit_threshold='
+]
 
-#markets['kraken'].decipher_key('kraken.enc')
 
-
-class Cli:
-    matches = []
-    completions = {}
-    values = []
-
-    def __init__(self, histfile, values=None):
+class cmd_completer(cmd.Cmd):
+    def __init__(self, prompt=None):
+        self.depth_monitor_list = []
+        cmd.Cmd.__init__(self)
+        if prompt:
+            self.prompt = prompt
+        self.intro = "Welcome to Bot console!"
         readline.clear_history()
         try:
             readline.read_history_file(histfile)
         except:
             pass
         atexit.register(readline.write_history_file, histfile)
-        readline.set_completer(self.completer)
-        readline.parse_and_bind('tab: menu-complete')
-        self.append_values(values)
 
-    def append_values(self, appendix):
-        self.values += appendix
-
-    def completer(self, text, state):
-        try:
-            self.matches = self.completions[text]
-        except KeyError:
-            self.matches = [value for value in self.values
-                            if text.upper() in value.upper()]
-            self.completions[text] = self.matches
-        try:
-            return self.matches[state]
-        except IndexError:
-            return None
-
-
-class MethodDispather():
-    #plot = plot.Plot()
-
-#    def depth(self):
-#        print('Kraken')
-#        print('------')
-#        print(kraken.kraken.current_depth[-1])
-#
-#        print('btce')
-#        print('------')
-#        print(btce.btce.current_depth[-1])
-
-    def prof_orders(self, api1, api2):
-        r = depth.prof_orders(
-            markets[api1].depth(),
-            markets[api2].depth(),
-            markets[api1].fees,
-            markets[api2].fees,
+    def do_start_depth_monitor(self, line):
+        """start_depth_monitor [api1] [api2]
+        start the depth monitor"""
+        print("starting depth monitor")
+        sm = depth_monitor.SpreadMonitor(
+            markets['kraken'],
+            markets['btce'],
         )
-        return (repr(r))
+        sm.setDaemon(True)
+        sm.start()
+        self.depth_monitor_list.append(sm)
 
-    def exit(self, params=None):
+    def do_show_depth_monitors(self, line):
+        """show_depth_monitors
+        show a list of all active depth monitors"""
+        for item in self.depth_monitor_list:
+            print(item)
+
+    def do_stop_depth_monitor(self, line):
+        """stop_depth_monitor <monitor_id>
+        stops a depth monitor"""
+        self.sm.stop()
+
+    def do_set_global(self, line):
+        """set_global <global_var>
+        set global variable to a new value"""
+        pass
+
+    def do_exit(self, line):
+        """exit
+        exit this shell. (Terminate)"""
         print ('goodbye.')
-        sys.exit(1)
+        return True
 
-    def version(self, params=None):
-        print (version)
-
-    def help(self, params=None):
-        i = max(len(x) for x in usage.keys())
-        for val in sorted(usage.keys()):
-            s = '   %-' + str(i + 3) + 's:     %s'
-            print (s % (val, usage[val]))
-
-    def echo(self, params=None):
-        print (params)
-
-    def plot(self, params=None):
-        print ('plotting %s' % params)
-
-    def load(self, params=None):
-        name = "package." + params[0]
-        print ('trying to import', params[0])
-        mod = __import__(name, fromlist=[])
-        if mod:
-            print ("worked!")
-
-    def showmods(self, params=None):
+    def do_show_modules(self, params=None):
+        """show_modules
+        show a list of all available modules"""
         lst = os.listdir("modules")
         dir = []
         for d in lst:
@@ -177,74 +109,56 @@ class MethodDispather():
             print ('modules.' + d)
             #res[d] = __import__("modules." + d, fromlist=["*"])
 
-    def call(self, params=None):
-        log.debug('calling %s', params)
+    def do_profitable_orders(self, api1, api2):
+        """profitable_orders <api1> <api2>
+        show all profitable orders between api1 and api2"""
+        r = depth.prof_orders(
+            markets[api1].depth(),
+            markets[api2].depth(),
+            markets[api1].fees,
+            markets[api2].fees,
+        )
+        print (repr(r))
+
+    def do_EOF(self, line):
+        """Ctrl-D
+        Terminate this program"""
+        print("GoodBye.")
+        return True
+
+    def do_version(self, line):
+        """version
+        show version string"""
+        print(version)
+
+    def default(self, line):
         try:
-            if not params:
-                return None
-            modulefunc = params[0].split('.')
-            if len(modulefunc) > 1:
-                params[0] = params[0].split('.', 1)[1]
-                methodToCall = getattr(markets[modulefunc[0]], params[0])
-            else:
-                methodToCall = getattr(self, params[0])
-        except IndexError as e:
-            print(e)
-            log.exception(e)
-            return None
+            exec(line) in self._locals, self._globals
         except Exception as e:
-            print(e)
-            log.exception(e)
-            return None
+            print(e.__class__, ":", e)
 
-        param_dict = dict(map(lambda t: tuple(t.split('=')), params[1:]))
-        try:
-            r = methodToCall(**param_dict)
-            print(r)
-        except Exception as e:
-            print(e)
-            log.exception(e)
+    def emptyline(self):
+        """Do nothing on empty line input"""
+        pass
 
-    def __init__(self, values):
-        self.values = values
+    def complete_profitable_orders(self, text, line, start_index, end_index):
+        return ['kraken', 'btc-e']
 
-
-def handler(signum, frame):
-    print ('Signal handler called with signal', signum)
-    print ('Hit Ctrl-D to exit')
+    def complete_set_global(self, text, line, start_index, end_index):
+        if text:
+            return [
+                gvar for gvar in global_vars
+                if gvar.startswith(text)
+            ]
+        else:
+            return global_vars
 
 
 def main():
-#    start_depth_thread(markets['kraken'])
-#    start_depth_thread(markets['btce'])
-
-    sm = depth_monitor.SpreadMonitor(
-        markets['kraken'],
-        markets['btce'],
-    )
-    sm.setDaemon(True)
-    sm.start()
-#        markets['exsimu1'],
-#        markets['exsimu2'],
-
-    cli = Cli(histfile, usage.keys())
-    methods = MethodDispather(cli.values)
-
-    signal.signal(signal.SIGINT, handler)
-
+    completer = cmd_completer(prompt)
     log.info('Enter main event loop')
-    while 1:
-        a = input(prompt)
-        try:
-            params = a.split(' ')
-            while '' in params:
-                params.remove('')
-
-            methods.call(params)
-        except Exception as e:
-            print(e)
-            continue
-
+    completer.cmdloop()
+    readline.write_history_file(histfile)
 
 if __name__ == "__main__":
     main()

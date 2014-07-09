@@ -104,7 +104,7 @@ class SpreadMonitor(threading.Thread):
                                                  self.api2.fees)
                 log.debug(spread)
                 if spread['profitable']:
-                    print(time.time(), spread)
+                    print(time.strftime("%H:%M:%S"), spread)
             except queue.Empty:
                 pass
             time.sleep(self.interval)
