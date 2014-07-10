@@ -10,6 +10,7 @@ import atexit
 from depth import depth
 import depth_monitor
 from keymgt import KeyMgmt
+import configparser
 
 import logging
 logging.basicConfig(filename='/tmp/bot.log',
@@ -42,11 +43,6 @@ markets = {
     'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
 
-global_vars = [
-    'depth_monitor_timeout=',
-    'depth_profit_threshold='
-]
-
 
 class cmd_completer(cmd.Cmd):
     def __init__(self, prompt=None):
@@ -61,6 +57,19 @@ class cmd_completer(cmd.Cmd):
         except:
             pass
         atexit.register(readline.write_history_file, histfile)
+        self.config = configparser.ConfigParser()
+        self.configfile = '/tmp/bot.conf'
+        try:
+            self.config.read(self.configfile)
+            self.global_vars = dict(self.config['global_vars'])
+        except:
+            self.global_vars = {}
+            self.global_vars['api1'] = "exsimu1"
+            self.global_vars['api2'] = "exsimu2"
+
+    def save_config(self):
+        with open(self.configfile, 'w') as f:
+            self.config.write(f)
 
     def do_stop_depth_monitor(self, line):
         """stop_depth_monitor
@@ -69,7 +78,7 @@ class cmd_completer(cmd.Cmd):
         self.sm.stop()
 
     def do_start_depth_monitor(self, line):
-        """start_depth_monitor [api1] [api2]
+        """start_depth_monitor <api1> <api2>
         start the depth monitor"""
         print("starting depth monitor")
         self.sm = depth_monitor.SpreadMonitor(
@@ -86,9 +95,20 @@ class cmd_completer(cmd.Cmd):
         for item in self.depth_monitor_list:
             print(item)
 
+    def do_show_globals(self, line):
+        """show_globals
+        shows all global variable settings"""
+        for i in self.global_vars.keys():
+            print("%40s: %s" % (i, self.global_vars[i]))
+        pass
+
     def do_set_global(self, line):
         """set_global <global_var>
         set global variable to a new value"""
+        d = dict([t.split('=') for t in line.split()])
+        self.global_vars.update(d)
+        self.config['global_vars'] = self.global_vars
+        self.save_config()
         pass
 
     def do_exit(self, line):
@@ -110,14 +130,16 @@ class cmd_completer(cmd.Cmd):
             print ('modules.' + d)
             #res[d] = __import__("modules." + d, fromlist=["*"])
 
-    def do_profitable_orders(self, api1, api2):
+    def do_profitable_orders(self, line):
         """profitable_orders <api1> <api2>
         show all profitable orders between api1 and api2"""
+        print("showing profitable orders between %s and %s" %
+              (self.global_vars['api1'], self.global_vars['api2']))
         r = depth.prof_orders(
-            markets[api1].depth(),
-            markets[api2].depth(),
-            markets[api1].fees,
-            markets[api2].fees,
+            markets[self.global_vars['api1']].depth(),
+            markets[self.global_vars['api2']].depth(),
+            markets[self.global_vars['api1']].fees,
+            markets[self.global_vars['api2']].fees,
         )
         print (repr(r))
 
@@ -148,11 +170,11 @@ class cmd_completer(cmd.Cmd):
     def complete_set_global(self, text, line, start_index, end_index):
         if text:
             return [
-                gvar for gvar in global_vars
-                if gvar.startswith(text)
-            ]
+                    gvar for gvar in self.global_vars.keys()
+                    if gvar.startswith(text)
+                ]
         else:
-            return global_vars
+            return list(self.global_vars.keys())
 
 
 def main():
