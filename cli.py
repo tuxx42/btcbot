@@ -66,6 +66,7 @@ class cmd_completer(cmd.Cmd):
             self.global_vars = {}
             self.global_vars['api1'] = "exsimu1"
             self.global_vars['api2'] = "exsimu2"
+            self.global_vars['max_trading_vol'] = "0.1"
 
     def save_config(self):
         with open(self.configfile, 'w') as f:
@@ -80,10 +81,11 @@ class cmd_completer(cmd.Cmd):
     def do_start_depth_monitor(self, line):
         """start_depth_monitor <api1> <api2>
         start the depth monitor"""
-        print("starting depth monitor")
+        print('starting depth monitor between "%s" and "%s"' %
+              (self.global_vars['api1'], self.global_vars['api2']))
         self.sm = depth_monitor.SpreadMonitor(
-            markets['kraken'],
-            markets['btce'],
+            markets[self.global_vars['api1']],
+            markets[self.global_vars['api2']],
         )
         self.sm.setDaemon(True)
         self.sm.start()
@@ -102,8 +104,19 @@ class cmd_completer(cmd.Cmd):
             print("%40s: %s" % (i, self.global_vars[i]))
         pass
 
+    def do_unset_global(self, line):
+        """unset_global <global_var>
+        unsets a global variable"""
+        if line in self.global_vars.keys():
+            print("removing key:", line)
+            del self.global_vars[line]
+            self.config['global_vars'] = self.global_vars
+            self.save_config()
+        else:
+            print("invalid key:", line)
+
     def do_set_global(self, line):
-        """set_global <global_var>
+        """set_global <global_var=value>
         set global variable to a new value"""
         d = dict([t.split('=') for t in line.split()])
         self.global_vars.update(d)
@@ -170,12 +183,14 @@ class cmd_completer(cmd.Cmd):
     def complete_set_global(self, text, line, start_index, end_index):
         if text:
             return [
-                    gvar for gvar in self.global_vars.keys()
-                    if gvar.startswith(text)
-                ]
+                gvar for gvar in self.global_vars.keys()
+                if gvar.startswith(text)
+            ]
         else:
             return list(self.global_vars.keys())
 
+    def complete_unset_global(self, text, line, start_index, end_index):
+        return self.complete_set_global(text, line, start_index, end_index)
 
 def main():
     completer = cmd_completer(prompt)

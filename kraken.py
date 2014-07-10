@@ -22,6 +22,7 @@ class kraken(ExAPI):
             key=key_mgmt.key,
             secret=key_mgmt.secret,
         )
+        self.balance = self.balance()
 
     def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
@@ -50,12 +51,12 @@ class kraken(ExAPI):
         getpair = kraken.pairs[pair]
         try:
             res = self.kraken.query_private('AddOrder',
-                                       {'pair': getpair,
-                                        'type': order,
-                                        'ordertype': ordertype,
-                                        'price': price,
-                                        'volume': vol,
-                                        })
+                                            {'pair': getpair,
+                                             'type': order,
+                                             'ordertype': ordertype,
+                                             'price': price,
+                                             'volume': vol,
+                                             })
         except Exception as e:
             print(e)
             raise Exception('could not issue order')
@@ -85,18 +86,18 @@ class kraken(ExAPI):
 
     def query_order(self, order_id):
         res = self.kraken.query_private('QueryOrders',
-                                   {'txid': order_id})
+                                        {'txid': order_id})
         return res
 
     def cancel_order(self, orderid):
         res = self.kraken.query_private('CancelOrder',
-                                   {'txid': orderid})
+                                        {'txid': orderid})
         return res
 
     def depth(self, pair='btc_eur', count=10):
         try:
             s = self.kraken.query_public('Depth', {'pair': kraken.pairs[pair],
-                                              'count': count})
+                                                   'count': count})
         except Exception as e:
             log.exception(e)
             raise

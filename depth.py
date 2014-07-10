@@ -151,6 +151,7 @@ class depth(object):
                         fees = fees_bid + fees_ask
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
+                        total_profit += profit - fees
                         # TODO sum volumes for same prices
                         if profit - fees > 0:
                             our_bid.append(trade(ask.value,
@@ -160,7 +161,6 @@ class depth(object):
                                                  ask.volume, typ=trade.BID))
                             log.debug('appending to our_ask %s', our_ask[-1])
                             res['profitable'] = True
-                            total_profit += profit - fees
                         else:
                             done = True
                         # goto next ask
@@ -175,6 +175,7 @@ class depth(object):
                         fees = fees_bid + fees_ask
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
+                        total_profit += profit - fees
                         # TODO sum volumes or same prices
                         if profit - fees > 0:
                             our_bid.append(trade(ask.value,
@@ -186,7 +187,6 @@ class depth(object):
                             log.debug('removing %s', bid)
                             bid_depth.remove(bid)
                             res['profitable'] = True
-                            total_profit += profit - fees
                         else:
                             done = True
                         # continue checking next bid
