@@ -181,7 +181,7 @@ class depth(object):
                                                  bid.volume, typ=trade.ASK))
                             log.debug('appending to our_bid %s', our_bid[-1])
                             our_ask.append(trade(bid.value,
-                                                 bid.volume, type=trade.BID))
+                                                 bid.volume, typ=trade.BID))
                             log.debug('appending to our_ask %s', our_ask[-1])
                             log.debug('removing %s', bid)
                             bid_depth.remove(bid)

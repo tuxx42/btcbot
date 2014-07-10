@@ -62,28 +62,29 @@ class cmd_completer(cmd.Cmd):
             pass
         atexit.register(readline.write_history_file, histfile)
 
+    def do_stop_depth_monitor(self, line):
+        """stop_depth_monitor
+        start the depth monitor"""
+        print("stopping depth monitor")
+        self.sm.stop()
+
     def do_start_depth_monitor(self, line):
         """start_depth_monitor [api1] [api2]
         start the depth monitor"""
         print("starting depth monitor")
-        sm = depth_monitor.SpreadMonitor(
+        self.sm = depth_monitor.SpreadMonitor(
             markets['kraken'],
             markets['btce'],
         )
-        sm.setDaemon(True)
-        sm.start()
-        self.depth_monitor_list.append(sm)
+        self.sm.setDaemon(True)
+        self.sm.start()
+#        self.depth_monitor_list.append(sm)
 
     def do_show_depth_monitors(self, line):
         """show_depth_monitors
         show a list of all active depth monitors"""
         for item in self.depth_monitor_list:
             print(item)
-
-    def do_stop_depth_monitor(self, line):
-        """stop_depth_monitor <monitor_id>
-        stops a depth monitor"""
-        self.sm.stop()
 
     def do_set_global(self, line):
         """set_global <global_var>

@@ -77,6 +77,8 @@ class SpreadMonitor(threading.Thread):
         super(SpreadMonitor, self).__init__()
 
         log.info('SpreadMonitor init')
+
+        self.stop_ev = threading.Event()
         self.interval = interval
         self.api1 = api1
         self.cmd_q1 = queue.Queue()
@@ -92,9 +94,12 @@ class SpreadMonitor(threading.Thread):
         self.t2.setDaemon(True)
         self.t2.start()
 
+    def stop(self):
+        self.stop_ev.set()
+
     def run(self):
         log.info('SpreadMonitor Tread started')
-        while True:
+        while not self.stop_ev.is_set():
             try:
                 d1 = self.t1.get_depth()
                 d2 = self.t2.get_depth()
