@@ -10,6 +10,8 @@ class global_vars(dict):
         self['prompt'] = prompt
         self['version'] = version
         self['histfile'] = histfile
+        self['depth_interval'] = 2.0
+        self['depth_timeout'] = 0.8
         self.update(g_vars)
 
 gv = global_vars()

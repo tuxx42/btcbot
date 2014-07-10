@@ -91,16 +91,11 @@ class cmd_completer(cmd.Cmd):
         api1 = gv['api1']
         api2 = gv['api2']
         s = ('starting depth monitor between "%s" and "%s"' % (api1, api2))
-        if 'depth_interval' in gv.keys():
-            s += (" with interval %f" %
-                  float(gv['depth_interval']))
-            sm = depth_monitor.SpreadMonitor(
-                markets[api1],
-                markets[api2],
-                float(gv['depth_interval'])
-            )
-        else:
-            sm = depth_monitor.SpreadMonitor(markets[api1], markets[api2])
+        sm = depth_monitor.SpreadMonitor(
+            markets[api1],
+            markets[api2],
+            float(gv['depth_interval'])
+        )
         print(s)
         sm.setDaemon(True)
         sm.start()

@@ -3,6 +3,7 @@ import time
 import queue
 import depth
 import logging
+from global_vars import gv
 log = logging.getLogger(__name__)
 
 
@@ -113,4 +114,4 @@ class SpreadMonitor(threading.Thread):
                     # check balance
             except queue.Empty:
                 pass
-            time.sleep(self.interval)
+            time.sleep(float(gv['depth_interval']))

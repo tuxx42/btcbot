@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import time
+from global_vars import gv
 log = logging.getLogger(__name__)
 
 
@@ -94,14 +95,19 @@ class depth(object):
 
         res = {'asks': [], 'bids': [], 'profitable': False}
 
+        done = False
+
         # make sure time of depths are not older than 1 second
-        if time.time() - depth1.time > 1:
-            log.error('depth information data too old %f',
-                      time.time() - depth1.time)
-            return res
-        elif time.time() - depth2.time > 1:
-            log.error('depth information data too old %f',
-                      time.time() - depth1.time)
+        if time.time() - depth1.time > float(gv['depth_timeout']):
+            log.error('depth data of api1 too old %f > %f',
+                      time.time() - depth1.time, float(gv['depth_timeout']))
+            done = True
+        elif time.time() - depth2.time > float(gv['depth_timeout']):
+            log.error('depth data of api2 too old %f > %f',
+                      time.time() - depth2.time, float(gv['depth_timeout']))
+            done = True
+
+        if done:
             return res
 
         mina1 = depth1.get_min_ask()
