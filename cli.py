@@ -14,7 +14,7 @@ import logging
 
 from depth import depth
 from keymgt import KeyMgmt
-from global_vars import global_vars
+from global_vars import gv
 
 logging.basicConfig(filename='/tmp/bot.log',
                     level=logging.DEBUG,
@@ -60,13 +60,13 @@ class cmd_completer(cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.config = configparser.ConfigParser()
         self.configfile = '/tmp/bot.conf'
-        self.global_vars = global_vars()
         try:
             self.config.read(self.configfile)
-            self.global_vars.update(dict(self.config['global_vars']))
+            global gv
+            gv.update(dict(self.config['global_vars']))
         except:
             pass
-        self.prompt = self.global_vars["prompt"] + ' '
+        self.prompt = gv["prompt"] + ' '
 
     def save_config(self):
         with open(self.configfile, 'w') as f:
@@ -88,16 +88,16 @@ class cmd_completer(cmd.Cmd):
     def do_start_depth_monitor(self, line):
         """start_depth_monitor <api1> <api2>
         start the depth monitor"""
-        api1 = self.global_vars['api1']
-        api2 = self.global_vars['api2']
+        api1 = gv['api1']
+        api2 = gv['api2']
         s = ('starting depth monitor between "%s" and "%s"' % (api1, api2))
-        if 'depth_interval' in self.global_vars.keys():
+        if 'depth_interval' in gv.keys():
             s += (" with interval %f" %
-                  float(self.global_vars['depth_interval']))
+                  float(gv['depth_interval']))
             sm = depth_monitor.SpreadMonitor(
                 markets[api1],
                 markets[api2],
-                float(self.global_vars['depth_interval'])
+                float(gv['depth_interval'])
             )
         else:
             sm = depth_monitor.SpreadMonitor(markets[api1], markets[api2])
@@ -119,18 +119,20 @@ class cmd_completer(cmd.Cmd):
     def do_show_globals(self, line):
         """show_globals
         shows all global variable settings"""
-        pad = max(len(x) for x in self.global_vars.keys())
-        for i in sorted(self.global_vars.keys()):
-            print("%*s: '%s'" % (- (pad + 3), i, self.global_vars[i]))
+        pad = max(len(x) for x in gv.keys())
+        for i in sorted(gv.keys()):
+            print("%*s: '%s'" % (- (pad + 3), i, gv[i]))
 
     def do_unset_globals(self, line):
         """unset_global <global_var> [<global_var> ... <global_var>]
         unsets a global variable"""
         for i in line.split():
-            if i in self.global_vars.keys():
+
+            global gv
+            if i in gv.keys():
                 print("removing key:", i)
-                del self.global_vars[i]
-                self.config['global_vars'] = self.global_vars
+                del gv[i]
+                self.config['global_vars'] = gv
                 self.save_config()
             else:
                 print("invalid key:", line)
@@ -143,10 +145,11 @@ class cmd_completer(cmd.Cmd):
         except Exception as e:
             print(e)
             return
-        self.global_vars.update(d)
-        self.config['global_vars'] = self.global_vars
-        if "prompt" in self.global_vars.keys():
-            self.prompt = self.global_vars['prompt'] + ' '
+        global gv
+        gv.update(d)
+        self.config['global_vars'] = gv
+        if "prompt" in gv.keys():
+            self.prompt = gv['prompt'] + ' '
         self.save_config()
 
     def do_exit(self, line):
@@ -171,8 +174,8 @@ class cmd_completer(cmd.Cmd):
     def do_profitable_orders(self, line):
         """profitable_orders <api1> <api2>
         show all profitable orders between api1 and api2"""
-        api1 = self.global_vars['api1']
-        api2 = self.global_vars['api2']
+        api1 = gv['api1']
+        api2 = gv['api2']
         print("showing profitable orders between '%s' and '%s'" % (api1, api2))
         r = depth.prof_orders(
             markets[api1].depth(), markets[api2].depth(),
@@ -210,11 +213,11 @@ class cmd_completer(cmd.Cmd):
     def complete_set_globals(self, text, line, start_index, end_index):
         if text:
             return [
-                gvar for gvar in self.global_vars.keys()
+                gvar for gvar in gv.keys()
                 if gvar.startswith(text)
             ]
         else:
-            return list(self.global_vars.keys())
+            return list(gv.keys())
 
     def complete_unset_global(self, text, line, start_index, end_index):
         return self.complete_set_global(text, line, start_index, end_index)

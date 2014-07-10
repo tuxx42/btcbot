@@ -11,3 +11,5 @@ class global_vars(dict):
         self['version'] = version
         self['histfile'] = histfile
         self.update(g_vars)
+
+gv = global_vars()
