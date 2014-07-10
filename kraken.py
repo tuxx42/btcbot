@@ -18,11 +18,11 @@ class kraken(ExAPI):
     pairs['eur'] = 'ZEUR'
 
     def __init__(self, key_mgmt):
-        self.kraken = modules.krakenex.API(
+        self.api = modules.krakenex.API(
             key=key_mgmt.key,
             secret=key_mgmt.secret,
         )
-        self.balance = self.balance()
+        self.balance = self.get_balance()
 
     def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
@@ -34,21 +34,22 @@ class kraken(ExAPI):
         except KeyError:
             raise Exception('invalid pair')
 
-    def balance(self, dummy=None):
-        s = self.kraken.query_private('Balance')
+    def get_balance(self):
+        s = self.api.query_private('Balance')
         if s['error']:
             print ("an error occured while getting the account balance: %s" %
                    s['error'])
             raise Exception('could not query')
         else:
             balance = {}
-            balance['btc'] = float(s['result']['XXBT'])
-            balance['eur'] = float(s['result']['ZEUR'])
-            return balance
+            for i in ['btc', 'eur']:
+                balance[i] = float(s['result'][self.pairs[i]])
+            self.balance = balance
+            return self.balance
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
         return 'blocked'
-        getpair = kraken.pairs[pair]
+        getpair = self.pairs[pair]
         try:
             res = self.kraken.query_private('AddOrder',
                                             {'pair': getpair,
@@ -96,8 +97,8 @@ class kraken(ExAPI):
 
     def depth(self, pair='btc_eur', count=10):
         try:
-            s = self.kraken.query_public('Depth', {'pair': kraken.pairs[pair],
-                                                   'count': count})
+            s = self.api.query_public('Depth', {'pair': self.pairs[pair],
+                                                'count': count})
         except Exception as e:
             log.exception(e)
             raise

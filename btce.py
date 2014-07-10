@@ -19,6 +19,7 @@ class btce(ExAPI):
         self.api = modules.btceapi.API(
             key_mgmt.key,
             key_mgmt.secret)
+        self.balance = self.get_balance()
 
     def fees(self, **kwargs):
         return 0.002
@@ -30,7 +31,7 @@ class btce(ExAPI):
         except:
             return Exception('unable to get pair?')
 
-    def balance(self, dummy=None):
+    def get_balance(self):
         balance = {}
         try:
             result = self.api.getInfo()
@@ -38,7 +39,8 @@ class btce(ExAPI):
                 return result['error']
             for s in ['btc', 'eur']:
                 balance[s] = result['return']['funds'][s]
-            return balance
+            self.balance = balance
+            return self.balance
         except Exception as e:
             print(e)
 

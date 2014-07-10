@@ -110,6 +110,7 @@ class SpreadMonitor(threading.Thread):
                 log.debug(spread)
                 if spread['profitable']:
                     print(time.strftime("%H:%M:%S"), spread)
+                    # check balance
             except queue.Empty:
                 pass
             time.sleep(self.interval)

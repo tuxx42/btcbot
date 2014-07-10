@@ -7,12 +7,15 @@ import kraken
 import btce
 import exsimu
 import atexit
-from depth import depth
 import depth_monitor
-from keymgt import KeyMgmt
 import configparser
-
+import shlex
 import logging
+
+from depth import depth
+from keymgt import KeyMgmt
+from global_vars import global_vars
+
 logging.basicConfig(filename='/tmp/bot.log',
                     level=logging.DEBUG,
                     format='%(asctime)s.%(msecs)d %(levelname)s' +
@@ -21,9 +24,8 @@ logging.basicConfig(filename='/tmp/bot.log',
 log = logging.getLogger('cli')
 
 version = "0.1 beta"
-prompt = "(Cmd) "
+prompt = "(Cmd)"
 histfile = "/tmp/history"
-
 
 key_mgmt_kraken = KeyMgmt.from_file(
     'kraken.enc',
@@ -45,13 +47,12 @@ markets = {
 
 
 class cmd_completer(cmd.Cmd):
-    def __init__(self, prompt=None):
+    def __init__(self):
         self.depth_monitor_list = []
         cmd.Cmd.__init__(self)
-        if prompt:
-            self.prompt = prompt
         self.intro = "Welcome to Bot console!"
         readline.clear_history()
+        self.depth_monitor_id = 0
         try:
             readline.read_history_file(histfile)
         except:
@@ -59,14 +60,13 @@ class cmd_completer(cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.config = configparser.ConfigParser()
         self.configfile = '/tmp/bot.conf'
+        self.global_vars = global_vars()
         try:
             self.config.read(self.configfile)
-            self.global_vars = dict(self.config['global_vars'])
+            self.global_vars.update(dict(self.config['global_vars']))
         except:
-            self.global_vars = {}
-            self.global_vars['api1'] = "exsimu1"
-            self.global_vars['api2'] = "exsimu2"
-            self.global_vars['max_trading_vol'] = "0.1"
+            pass
+        self.prompt = self.global_vars["prompt"] + ' '
 
     def save_config(self):
         with open(self.configfile, 'w') as f:
@@ -75,54 +75,79 @@ class cmd_completer(cmd.Cmd):
     def do_stop_depth_monitor(self, line):
         """stop_depth_monitor
         start the depth monitor"""
-        print("stopping depth monitor")
-        self.sm.stop()
+        try:
+            for i in self.depth_monitor_list:
+                if int(i['id']) == int(line):
+                    print("stopping depth monitor %s" % line)
+                    i['object'].stop()
+                    self.depth_monitor_list.remove(i)
+                    break
+        except:
+            pass
 
     def do_start_depth_monitor(self, line):
         """start_depth_monitor <api1> <api2>
         start the depth monitor"""
-        print('starting depth monitor between "%s" and "%s"' %
-              (self.global_vars['api1'], self.global_vars['api2']))
-        self.sm = depth_monitor.SpreadMonitor(
-            markets[self.global_vars['api1']],
-            markets[self.global_vars['api2']],
-        )
-        self.sm.setDaemon(True)
-        self.sm.start()
-#        self.depth_monitor_list.append(sm)
+        api1 = self.global_vars['api1']
+        api2 = self.global_vars['api2']
+        s = ('starting depth monitor between "%s" and "%s"' % (api1, api2))
+        if 'depth_interval' in self.global_vars.keys():
+            s += (" with interval %f" %
+                  float(self.global_vars['depth_interval']))
+            sm = depth_monitor.SpreadMonitor(
+                markets[api1],
+                markets[api2],
+                float(self.global_vars['depth_interval'])
+            )
+        else:
+            sm = depth_monitor.SpreadMonitor(markets[api1], markets[api2])
+        print(s)
+        sm.setDaemon(True)
+        sm.start()
+        self.depth_monitor_list.append({'id': self.depth_monitor_id,
+                                        'object': sm,
+                                        'api1': api1,
+                                        'api2': api2})
+        self.depth_monitor_id += 1
 
     def do_show_depth_monitors(self, line):
         """show_depth_monitors
         show a list of all active depth monitors"""
         for item in self.depth_monitor_list:
-            print(item)
+            print("id=%d, %s/%s" % (item['id'], item['api1'], item['api2']))
 
     def do_show_globals(self, line):
         """show_globals
         shows all global variable settings"""
-        for i in self.global_vars.keys():
-            print("%40s: %s" % (i, self.global_vars[i]))
-        pass
+        pad = max(len(x) for x in self.global_vars.keys())
+        for i in sorted(self.global_vars.keys()):
+            print("%*s: '%s'" % (- (pad + 3), i, self.global_vars[i]))
 
-    def do_unset_global(self, line):
-        """unset_global <global_var>
+    def do_unset_globals(self, line):
+        """unset_global <global_var> [<global_var> ... <global_var>]
         unsets a global variable"""
-        if line in self.global_vars.keys():
-            print("removing key:", line)
-            del self.global_vars[line]
-            self.config['global_vars'] = self.global_vars
-            self.save_config()
-        else:
-            print("invalid key:", line)
+        for i in line.split():
+            if i in self.global_vars.keys():
+                print("removing key:", i)
+                del self.global_vars[i]
+                self.config['global_vars'] = self.global_vars
+                self.save_config()
+            else:
+                print("invalid key:", line)
 
-    def do_set_global(self, line):
+    def do_set_globals(self, line):
         """set_global <global_var=value>
         set global variable to a new value"""
-        d = dict([t.split('=') for t in line.split()])
+        try:
+            d = dict([t.split('=') for t in shlex.split(line)])
+        except Exception as e:
+            print(e)
+            return
         self.global_vars.update(d)
         self.config['global_vars'] = self.global_vars
+        if "prompt" in self.global_vars.keys():
+            self.prompt = self.global_vars['prompt'] + ' '
         self.save_config()
-        pass
 
     def do_exit(self, line):
         """exit
@@ -146,13 +171,12 @@ class cmd_completer(cmd.Cmd):
     def do_profitable_orders(self, line):
         """profitable_orders <api1> <api2>
         show all profitable orders between api1 and api2"""
-        print("showing profitable orders between %s and %s" %
-              (self.global_vars['api1'], self.global_vars['api2']))
+        api1 = self.global_vars['api1']
+        api2 = self.global_vars['api2']
+        print("showing profitable orders between '%s' and '%s'" % (api1, api2))
         r = depth.prof_orders(
-            markets[self.global_vars['api1']].depth(),
-            markets[self.global_vars['api2']].depth(),
-            markets[self.global_vars['api1']].fees,
-            markets[self.global_vars['api2']].fees,
+            markets[api1].depth(), markets[api2].depth(),
+            markets[api1].fees, markets[api2].fees,
         )
         print (repr(r))
 
@@ -169,7 +193,7 @@ class cmd_completer(cmd.Cmd):
 
     def default(self, line):
         try:
-            exec(line) in self._locals, self._globals
+            exec(line)
         except Exception as e:
             print(e.__class__, ":", e)
 
@@ -177,10 +201,13 @@ class cmd_completer(cmd.Cmd):
         """Do nothing on empty line input"""
         pass
 
+    def precmd(self, line):
+        return line
+
     def complete_profitable_orders(self, text, line, start_index, end_index):
         return ['kraken', 'btc-e']
 
-    def complete_set_global(self, text, line, start_index, end_index):
+    def complete_set_globals(self, text, line, start_index, end_index):
         if text:
             return [
                 gvar for gvar in self.global_vars.keys()
@@ -192,8 +219,9 @@ class cmd_completer(cmd.Cmd):
     def complete_unset_global(self, text, line, start_index, end_index):
         return self.complete_set_global(text, line, start_index, end_index)
 
+
 def main():
-    completer = cmd_completer(prompt)
+    completer = cmd_completer()
     log.info('Enter main event loop')
     completer.cmdloop()
     readline.write_history_file(histfile)
