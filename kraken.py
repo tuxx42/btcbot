@@ -48,6 +48,9 @@ class kraken(ExAPI):
             return self.balance
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
+        print('executing trade order: %s, value: %f, volume: %f, type: %s' %
+              (order, price, vol, ordertype))
+
         return 'blocked'
         getpair = self.pairs[pair]
         try:

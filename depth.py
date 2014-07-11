@@ -123,11 +123,13 @@ class depth(object):
             bid_depth = depth2.bids
             cb_ask_fees = cb_fees1
             cb_bid_fees = cb_fees2
+            res['direction'] = 1
         elif mina2 < maxb1:
             ask_depth = depth2.asks
             bid_depth = depth1.bids
             cb_ask_fees = cb_fees2
             cb_bid_fees = cb_fees1
+            res['direction'] = -1
         else:
             return res
 
@@ -230,10 +232,10 @@ class depth(object):
                 log.error("DEPTH ERROR: total_profit is negative")
                 res['error'] = "total profit is negative"
 
-            # res['ask_volume'] is btc vol
-            res['ask_volume'] = ask_volume
-            # res['bid_volume'] is eur vol
-            res['bid_volume'] = bid_value
+            # res['vol_ask'] is btc vol
+            res['vol_ask'] = ask_volume
+            # res['vol_bid'] is eur vol
+            res['vol_bid'] = bid_value
 
         return res
 

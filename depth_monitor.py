@@ -3,9 +3,14 @@ import time
 import queue
 import depth
 import logging
-import TradeExector from trade_executer
+from multiprocessing.pool import ThreadPool
 from global_vars import gv
 log = logging.getLogger(__name__)
+
+
+def execute_trades(api, trades):
+    for trade in trades:
+        api.execute(trade)
 
 
 class AsyncResult(threading.Thread):
@@ -96,6 +101,8 @@ class SpreadMonitor(threading.Thread):
         self.t2.setDaemon(True)
         self.t2.start()
 
+        self.order_pool = ThreadPool(2)
+
     def stop(self):
         self.stop_ev.set()
 
@@ -112,7 +119,25 @@ class SpreadMonitor(threading.Thread):
                 log.debug(spread)
                 if spread['profitable']:
                     print(time.strftime("%H:%M:%S"), spread)
+                    direction = spread['direction']
+                    vol_ask = spread['vol_ask']
+                    vol_bid = spread['vol_bid']
                     # check balance
+                    # sell on 1 buy on 2
+                    if direction > 0:
+                        if self.api1.balance_bid > vol_bid and \
+                                self.api2.balance_ask > vol_ask:
+                            self.order_pool.map(execute_trades,
+                                                [[self.api2, spread['asks']],
+                                                 [self.api1, spread['bids']]]
+                                                )
+                    else:
+                        if self.api2.balance_bid > vol_bid and \
+                                self.api1.balance_ask > vol_ask:
+                            self.order_pool.map(execute_trades,
+                                                [[self.api1, spread['asks']],
+                                                 [self.api2, spread['bids']]]
+                                                )
             except queue.Empty:
                 pass
             time.sleep(float(gv['depth_interval']))

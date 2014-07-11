@@ -1,4 +1,5 @@
 import threading
+from depth import trade
 
 
 class ExAPI(object):
@@ -11,21 +12,29 @@ class ExAPI(object):
         self.last_update = 0.0
         self.last_depth = None
         self.depth = None
+        self.balance_bid = 0.0
+        self.balance_ask = 0.0
 
-    def cipher_key(self, dummy=None):
-        pass
+    def execute(self, order):
+        if order.typ == trade.BID:
+            self.add_order('buy', order.value, order.volume)
+        elif order.typ == trade.ASK:
+            self.add_order('sell', order.value, order.volume)
 
-    def decipher_key(self, dummy=None):
-        pass
+    #def cipher_key(self, dummy=None):
+    #    pass
 
-    def get_balance(self, dummy=None):
-        pass
+    #def decipher_key(self, dummy=None):
+    #    pass
 
-    def add_order(self, order, price, vol):
-        pass
+    #def get_balance(self, dummy=None):
+    #    pass
 
-    def get_trades(self, **kwargs):
-        pass
+    #def add_order(self, order, price, vol):
+    #    pass
+
+    #def get_trades(self, **kwargs):
+    #    pass
 
     def get_min_bid(self):
         return self.current_depth[-1][0].get_min_bid()
@@ -36,5 +45,5 @@ class ExAPI(object):
     def get_max_ask(self):
         return self.current_depth[-1][0].get_max_ask()
 
-    def depth(self, **kwargs):
-        pass
+    #def depth(self, **kwargs):
+    #    pass
