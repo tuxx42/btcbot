@@ -3,6 +3,7 @@ import time
 import queue
 import depth
 import logging
+import TradeExector from trade_executer
 from global_vars import gv
 log = logging.getLogger(__name__)
 
