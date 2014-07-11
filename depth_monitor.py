@@ -102,6 +102,8 @@ class SpreadMonitor(threading.Thread):
         self.t2.start()
 
         self.order_pool = ThreadPool(2)
+        self.api1.update_balance()
+        self.api2.update_balance()
 
     def stop(self):
         self.stop_ev.set()
@@ -120,8 +122,15 @@ class SpreadMonitor(threading.Thread):
                 if spread['profitable']:
                     print(time.strftime("%H:%M:%S"), spread)
                     direction = spread['direction']
+                    print(repr(direction))
                     vol_ask = spread['vol_ask']
                     vol_bid = spread['vol_bid']
+                    print('va ', vol_ask)
+                    print('vb ', vol_bid)
+                    print('a1a ', self.api1.balance_ask)
+                    print('a2a ', self.api2.balance_ask)
+                    print('a1b ', self.api1.balance_bid)
+                    print('a2b ', self.api2.balance_bid)
                     # check balance
                     # sell on 1 buy on 2
                     if direction > 0:
@@ -138,6 +147,8 @@ class SpreadMonitor(threading.Thread):
                                                 [[self.api1, spread['asks']],
                                                  [self.api2, spread['bids']]]
                                                 )
+                self.api1.update_balance()
+                self.api2.update_balance()
             except queue.Empty:
                 pass
             time.sleep(float(gv['depth_interval']))

@@ -23,14 +23,16 @@ class exsimu(ExAPI):
         else:
             return Exception('cannot get fees')
 
-    def balance(self, dummy=None):
+    def get_balance(self, dummy=None):
         try:
             return self.api.get_balance()
         except Exception as e:
             print(e)
             raise Exception('cannot get balance')
 
-    def add_order(self, order, price, vol, pair='btc_eur'):
+    def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
+        print('executing trade order: %s, value: %f, volume: %f, type: %s' %
+              (order, price, vol, ordertype))
         s = self.api.add_order(pair=pair,
                                order=order,
                                price=price,

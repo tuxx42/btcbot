@@ -85,6 +85,11 @@ class cmd_completer(cmd.Cmd):
         except:
             pass
 
+    def do_get_balance(self, line):
+        api1 = gv['api1']
+        b = markets[api1].get_balance()
+        print(repr(b))
+
     def do_start_depth_monitor(self, line):
         """start_depth_monitor <api1> <api2>
         start the depth monitor"""

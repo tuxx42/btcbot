@@ -21,6 +21,11 @@ class ExAPI(object):
         elif order.typ == trade.ASK:
             self.add_order('sell', order.value, order.volume)
 
+    def update_balance(self):
+        balance = self.get_balance()
+        self.balance_bid = balance['btc']
+        self.balance_ask = balance['eur']
+
     #def cipher_key(self, dummy=None):
     #    pass
 
