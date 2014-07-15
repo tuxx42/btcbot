@@ -29,9 +29,12 @@ class API:
             self.__config.read(self.__configname)
             for cur in self.__config['balance']:
                 self.__balance[cur] = float(self.__config['balance'][cur])
-            self.__orderid = int(self.__config['orders']['orderid'])
-            self.__active_orders = dict(self.__config['active_orders'])
-            self.__closed_orders = dict(self.__config['closed_orders'])
+            try:
+                self.__orderid = int(self.__config['orders']['orderid'])
+                self.__active_orders = dict(self.__config['active_orders'])
+                self.__closed_orders = dict(self.__config['closed_orders'])
+            except:
+                pass
         except:
             self.__orderid = 0
             self.__balance['btc'] = float(0.95)

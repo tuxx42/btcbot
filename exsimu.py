@@ -25,7 +25,8 @@ class exsimu(ExAPI):
 
     def get_balance(self, dummy=None):
         try:
-            return self.api.get_balance()
+            self.balance = self.api.get_balance()
+            return self.balance
         except Exception as e:
             print(e)
             raise Exception('cannot get balance')
