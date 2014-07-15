@@ -191,10 +191,10 @@ class depth(object):
                         # TODO sum volumes for same prices
                         if profit - fees > 0:
                             our_bid.append(trade(ask.value,
-                                                 ask.volume, typ=trade.ASK))
+                                                 ask.volume, typ=trade.BID))
                             log.debug('appending to our_bid %s', our_bid[-1])
                             our_ask.append(trade(bid.value,
-                                                 ask.volume, typ=trade.BID))
+                                                 ask.volume, typ=trade.ASK))
                             log.debug('appending to our_ask %s', our_ask[-1])
                             res['profitable'] = True
                             total_profit += profit - fees
@@ -215,10 +215,10 @@ class depth(object):
                         # TODO sum volumes or same prices
                         if profit - fees > 0:
                             our_bid.append(trade(ask.value,
-                                                 bid.volume, typ=trade.ASK))
+                                                 bid.volume, typ=trade.BID))
                             log.debug('appending to our_bid %s', our_bid[-1])
                             our_ask.append(trade(bid.value,
-                                                 bid.volume, typ=trade.BID))
+                                                 bid.volume, typ=trade.ASK))
                             log.debug('appending to our_ask %s', our_ask[-1])
                             log.debug('removing %s', bid)
                             bid_depth[idxb].volume = -1
@@ -235,7 +235,6 @@ class depth(object):
                         bid_depth.remove(bid)
                     break
 
-        print(repr(our_ask))
         # sanity check
         if res['profitable']:
             res['asks'] = our_ask
