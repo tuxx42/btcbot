@@ -48,6 +48,33 @@ class trade(object):
         return t1.value - t2.value
 
 
+class ask_list(list):
+    def __init__(self):
+        super().__init__()
+
+    def append(self, ask):
+        for idx, i in enumerate(self):
+            if self[idx].value == ask.value:
+                self[idx].volume += ask.volume
+                return None
+        super().append(ask)
+
+
+class bid_list(list):
+    def __init__(self):
+        super().__init__()
+
+    def append(self, bid):
+        for idx, i in enumerate(self):
+            if self[idx].value <= bid.value:
+                self[idx].value = bid.value
+                self[idx].volume += bid.volume
+                return None
+            else:
+                self[idx].volume += bid.volume
+        super().append(bid)
+
+
 class depth(object):
     def __init__(self, asks=[], bids=[]):
         self.time = time.time()
@@ -89,7 +116,7 @@ class depth(object):
         return weighted_value
 
     @staticmethod
-    def prof_orders(depth1, depth2, cb_fees1, cb_fees2):
+    def profitable_orders(depth1, depth2, cb_fees1, cb_fees2):
         # TODO set global threshold value for profitable trades
         #      (currently 0.2)
 
@@ -136,9 +163,9 @@ class depth(object):
         log.debug("ask_depth: %s", ask_depth)
         log.debug("bid_depth: %s", bid_depth)
         # what we want to buy
-        our_ask = []
+        our_ask = ask_list()
         # what we want to sell
-        our_bid = []
+        our_bid = bid_list()
         bid_depth = list(reversed(bid_depth))
         total_profit = 0
 
@@ -149,6 +176,8 @@ class depth(object):
             for idxb, bid in enumerate(bid_depth):
                 log.debug('comparing %s <> %s', ask, bid)
                 if ask.value < bid.value:
+                    if bid.volume == 0:
+                        continue
                     if ask.volume < bid.volume:
                         log.debug('reducing %s by vol %f', bid, ask.volume)
                         bid_depth[idxb].volume -= ask.volume
@@ -192,20 +221,26 @@ class depth(object):
                                                  bid.volume, typ=trade.BID))
                             log.debug('appending to our_ask %s', our_ask[-1])
                             log.debug('removing %s', bid)
-                            bid_depth.remove(bid)
+                            bid_depth[idxb].volume = -1
+                            #bid_depth.remove(bid)
                             res['profitable'] = True
                             total_profit += profit - fees
                         else:
                             done = True
                         # continue checking next bid
                 else:
+                    # remove consumed bids
+                    bids = [bid for bid in bid_depth if bid.volume == -1]
+                    for bid in bids:
+                        bid_depth.remove(bid)
                     break
 
+        print(repr(our_ask))
         # sanity check
         if res['profitable']:
             res['asks'] = our_ask
             res['bids'] = our_bid
-            res['total_profit'] = total_profit
+            res['total_profit'] = round(total_profit, 3)
             #assert(len(our_ask) > 0 and len(our_bid) > 0)
             ask_volume = 0.0
             ask_price_avg = 0.0
@@ -215,19 +250,26 @@ class depth(object):
             for i in our_ask:
                 ask_volume += i.volume
                 ask_price_avg += i.value * i.volume
+            ask_price_avg = round(ask_price_avg, 8)
+
             for i in our_bid:
                 bid_volume += i.volume
                 bid_price_avg += i.value * i.volume
+            bid_price_avg = round(bid_price_avg, 8)
+
             for i in our_bid:
-                bid_value += i.value
+                bid_value += i.value * i.volume
+
             if ask_price_avg < bid_price_avg:
                 log.error("DEPTH ERROR: our_ask_price: %f, our_bid_price: %f",
                           ask_price_avg, bid_price_avg)
                 res['error'] = "average ask price is not larger than bid price"
-            if ask_volume != bid_volume:
+
+            if abs(ask_volume - bid_volume) >= 0.001:
                 log.error("DEPTH ERROR: ask_volume: %f, bid_volume: %f",
                           ask_volume, bid_volume)
                 res['error'] = "ask and bid volume not equivalent"
+
             if total_profit < 0:
                 log.error("DEPTH ERROR: total_profit is negative")
                 res['error'] = "total profit is negative"

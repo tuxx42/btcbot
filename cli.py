@@ -177,7 +177,7 @@ class cmd_completer(cmd.Cmd):
         api1 = gv['api1']
         api2 = gv['api2']
         print("showing profitable orders between '%s' and '%s'" % (api1, api2))
-        r = depth.prof_orders(
+        r = depth.profitable_orders(
             markets[api1].depth(), markets[api2].depth(),
             markets[api1].fees, markets[api2].fees,
         )

@@ -114,11 +114,17 @@ class SpreadMonitor(threading.Thread):
             try:
                 d1 = self.t1.get_depth()
                 d2 = self.t2.get_depth()
-                spread = depth.depth.prof_orders(d1.get(),
-                                                 d2.get(),
-                                                 self.api1.fees,
-                                                 self.api2.fees)
+                spread = depth.depth.profitable_orders(d1.get(),
+                                                       d2.get(),
+                                                       self.api1.fees,
+                                                       self.api2.fees)
                 log.debug(spread)
+                try:
+                    if spread['error']:
+                        print(spread['error'])
+                        return False
+                except:
+                    pass
                 if spread['profitable']:
                     print(time.strftime("%H:%M:%S"), spread)
                     direction = spread['direction']
@@ -133,22 +139,24 @@ class SpreadMonitor(threading.Thread):
                     print('a2b ', self.api2.balance_bid)
                     # check balance
                     # sell on 1 buy on 2
-                    if direction > 0:
-                        if self.api1.balance_bid > vol_bid and \
-                                self.api2.balance_ask > vol_ask:
+                    if direction < 0:
+                        if self.api1.balance_bid > vol_ask and \
+                                self.api2.balance_ask > vol_bid:
+                            print('1')
                             self.order_pool.map(execute_trades,
                                                 [[self.api2, spread['asks']],
                                                  [self.api1, spread['bids']]]
                                                 )
                     else:
-                        if self.api2.balance_bid > vol_bid and \
-                                self.api1.balance_ask > vol_ask:
+                        if self.api2.balance_bid > vol_ask and \
+                                self.api1.balance_ask > vol_bid:
+                            print('2')
                             self.order_pool.map(execute_trades,
                                                 [[self.api1, spread['asks']],
                                                  [self.api2, spread['bids']]]
                                                 )
-                self.api1.update_balance()
-                self.api2.update_balance()
+                    self.api1.update_balance()
+                    self.api2.update_balance()
             except queue.Empty:
                 pass
             time.sleep(float(gv['depth_interval']))

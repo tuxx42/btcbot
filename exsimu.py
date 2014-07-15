@@ -31,8 +31,8 @@ class exsimu(ExAPI):
             raise Exception('cannot get balance')
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
-        print('executing trade order: %s, value: %f, volume: %f, type: %s' %
-              (order, price, vol, ordertype))
+        print('executing trade order %s: %s, value: %f, volume: %f, type: %s' %
+              (self.name, order, price, vol, ordertype))
         s = self.api.add_order(pair=pair,
                                order=order,
                                price=price,
