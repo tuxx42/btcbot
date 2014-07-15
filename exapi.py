@@ -18,8 +18,13 @@ class ExAPI(object):
     def execute(self, order):
         if order.typ == trade.BID:
             self.add_order('buy', order.value, order.volume)
+            order_type = "buy "
         elif order.typ == trade.ASK:
             self.add_order('sell', order.value, order.volume)
+            order_type = "sell"
+
+        print("[%s] %s vol=%f val=%f" %
+              (self.name, order_type, order.volume, order.value))
 
     def update_balance(self):
         balance = self.get_balance()

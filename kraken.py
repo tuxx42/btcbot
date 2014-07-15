@@ -17,12 +17,16 @@ class kraken(ExAPI):
     pairs['btc'] = 'XXBT'
     pairs['eur'] = 'ZEUR'
 
-    def __init__(self, key_mgmt):
+    def __init__(self, key_mgmt, name=None):
         self.api = modules.krakenex.API(
             key=key_mgmt.key,
             secret=key_mgmt.secret,
         )
         self.balance = self.get_balance()
+        if name:
+            self.name = name
+        else:
+            self.name = "kraken"
 
     def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
