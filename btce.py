@@ -3,6 +3,7 @@ import modules.btceapi
 import time
 from exapi import ExAPI
 from depth import depth
+from global_vars import gv
 
 import logging
 log = logging.getLogger(__name__)
@@ -68,12 +69,16 @@ class btce(ExAPI):
     def trades(self, **kwargs):
         pass
 
-    def depth(self, pair='btc_eur', count=20):
+    def depth(self, pair='btc_eur'):
+        if 'depth_count' in gv.keys():
+            count = int(gv['depth_count'])
+        else:
+            count = 20
         try:
             s = self.api.get_param(pair, 'depth')
         except Exception as e:
             log.exception(e)
-            raise
+            raise Exception('could not get depth')
         d = depth(**s)
         d.asks = d.asks[:count]
         d.bids = d.bids[-count:]

@@ -3,6 +3,7 @@ from exapi import ExAPI
 import modules.krakenex
 import time
 from depth import depth
+from global_vars import gv
 
 import logging
 log = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ class kraken(ExAPI):
     pairs = {}
     name = 'kraken'
     pairs['btc_eur'] = 'XXBTZEUR'
+    pairs['btc_usd'] = 'XXBTZUSD'
     pairs['btc'] = 'XXBT'
     pairs['eur'] = 'ZEUR'
 
@@ -102,7 +104,12 @@ class kraken(ExAPI):
                                         {'txid': orderid})
         return res
 
-    def depth(self, pair='btc_eur', count=10):
+    def depth(self, pair='btc_eur'):
+        if 'depth_count' in gv.keys():
+            count = int(gv['depth_count'])
+        else:
+            count = 20
+
         try:
             s = self.api.query_public('Depth', {'pair': self.pairs[pair],
                                                 'count': count})
