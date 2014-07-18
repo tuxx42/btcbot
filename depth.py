@@ -176,7 +176,7 @@ class depth(object):
             for idxb, bid in enumerate(bid_depth):
                 log.debug('comparing %s <> %s', ask, bid)
                 if ask.value < bid.value:
-                    if bid.volume == 0:
+                    if bid.volume == -1:
                         continue
                     if ask.volume < bid.volume:
                         log.debug('reducing %s by vol %f', bid, ask.volume)
