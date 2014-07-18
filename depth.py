@@ -264,19 +264,29 @@ class depth(object):
                           ask_price_avg, bid_price_avg)
                 res['error'] = "average ask price is not larger than bid price"
 
+            if ask_volume < 0:
+                log.error("DEPTH ERROR: ask_volume is negative", ask_volume)
+                res['error'] = "ask_volume is negative"
+
+            if bid_volume < 0:
+                log.error("DEPTH ERROR: bid_volume is negative", bid_volume)
+                res['error'] = "bid_volume is negative"
+
             if abs(ask_volume - bid_volume) >= 0.001:
                 log.error("DEPTH ERROR: ask_volume: %f, bid_volume: %f",
                           ask_volume, bid_volume)
                 res['error'] = "ask and bid volume not equivalent"
 
             if total_profit < 0:
-                log.error("DEPTH ERROR: total_profit is negative")
+                log.error("DEPTH ERROR: total_profit is negative %f",
+                          total_profit)
                 res['error'] = "total profit is negative"
 
             # res['vol_ask'] is btc vol
-            res['vol_ask'] = ask_volume
+            res['vol_ask'] = round(ask_volume, 8)
             # res['vol_bid'] is eur vol
             res['vol_bid'] = bid_value
+            res['pair'] = gv['pair']
 
         return res
 
