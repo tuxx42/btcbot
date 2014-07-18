@@ -23,7 +23,7 @@ class AsyncResult(threading.Thread):
         self.result = None
 
     def run(self):
-        log.debug('Async result on %s', self.callback)
+        #log.debug('Async result on %s', self.callback)
         self.result = self.callback()
 #        log.debug('Async result %s retrieved', self.result)
         self.done.acquire()
@@ -53,7 +53,7 @@ class Monitor(threading.Thread):
 
     def get_depth(self):
         log.debug('Getting depth from %s', self.api)
-        self.cmd_q.put([self.api.depth, ])
+        self.cmd_q.put([self.api.depth, gv['pair']])
         r = AsyncResult(self.res_q.get)
         r.start()
         return r
@@ -62,9 +62,10 @@ class Monitor(threading.Thread):
         while not self.stop.is_set():
             try:
                 cmd = self.cmd_q.get(True, 1.0)
-                log.debug('cmd loop: %s', repr(cmd))
-                func = cmd.pop()
-                log.debug('Calling %s', repr(func))
+                #log.debug('cmd loop: %s', repr(cmd))
+                func = cmd[0]
+                cmd = cmd[1:]
+                #log.debug('Calling %s', repr(func))
                 res = func(*cmd)
                 #log.debug('GOT RESULT: %s', res)
                 self.res_q.put(res)
@@ -102,8 +103,15 @@ class SpreadMonitor(threading.Thread):
         self.t2.start()
 
         self.order_pool = ThreadPool(2)
-        self.api1.update_balance()
-        self.api2.update_balance()
+        while True:
+            try:
+                self.api1.update_balance()
+                self.api2.update_balance()
+                return None
+            except Exception as e:
+                time.sleep(5)
+                log.debug(e)
+                print(e)
 
     def stop(self):
         self.stop_ev.set()
@@ -144,23 +152,8 @@ class SpreadMonitor(threading.Thread):
                                              [api1, spread['asks']]]
                                             )
 
-                    # alternative 2
-#                    if direction < 0:
-#                        if self.api1.balance_bid > vol_ask and \
-#                                self.api2.balance_ask > vol_bid:
-#                            self.order_pool.map(execute_trades,
-#                                                [[self.api2, spread['bids']],
-#                                                 [self.api1, spread['asks']]]
-#                                                )
-#                    else:
-#                        if self.api2.balance_bid > vol_ask and \
-#                                self.api1.balance_ask > vol_bid:
-#                            self.order_pool.map(execute_trades,
-#                                                [[self.api1, spread['bids']],
-#                                                 [self.api2, spread['asks']]]
-#                                                )
-                    self.api1.update_balance()
-                    self.api2.update_balance()
+                    #self.api1.update_balance()
+                    #self.api2.update_balance()
             except queue.Empty:
                 pass
             time.sleep(float(gv['depth_interval']))
