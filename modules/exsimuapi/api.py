@@ -56,6 +56,9 @@ class API:
         self.save_config()
         return self.__balance
 
+    def fees(self):
+        return 0.002
+
     # return depth
     def get_depth(self, pair):
         return self.__depth_data
@@ -116,14 +119,14 @@ class API:
             raise Exception('pair not implemented')
         if order == 'buy':
             if float(price) * float(vol) > self.__balance[cur]:
-                raise Exception('EOrder:Insufficient funds')
+                raise Exception('EOrder:Insufficient funds %f vs %f',
+                                float(price) * float(vol), self.__balance[cur])
             else:
                 self.__balance[cur] -= float(price) * float(vol)
         elif order == 'sell':
             if float(vol) > self.__balance['btc']:
                 raise Exception('EOrder:Insufficient volume')
-            else:
-                self.__balance['btc'] -= float(vol)
+
         order_id = 'tx_' + str(self.__orderid)
         new_order = {
             'pair': str(pair),
@@ -146,11 +149,13 @@ class API:
             if order == 'buy':
                 self.__balance['btc'] += new_order['executed_volume']
                 self.__balance[cur] += float(price) * float(vol)
+                print("before", self.__balance[cur])
                 self.__balance[cur] -= new_order['executed_volume'] * \
-                    new_order['executed_price_avg']
+                    new_order['executed_price_avg'] * (1.0 + self.fees())
+                print("after", self.__balance[cur])
             elif order == 'sell':
                 self.__balance[cur] += float(price) * \
-                    new_order['executed_volume']
+                    new_order['executed_volume'] * (1.0 - self.fees())
 
         self.save_config()
 

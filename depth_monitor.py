@@ -4,7 +4,6 @@ import queue
 import depth
 import logging
 from multiprocessing.pool import ThreadPool
-from global_vars import gv
 log = logging.getLogger(__name__)
 
 
@@ -51,9 +50,9 @@ class Monitor(threading.Thread):
     def stop(self):
         self.stop.set()
 
-    def get_depth(self):
+    def get_depth(self, pair):
         log.debug('Getting depth from %s', self.api)
-        self.cmd_q.put([self.api.depth, gv['pair']])
+        self.cmd_q.put([self.api.depth, pair])
         r = AsyncResult(self.res_q.get)
         r.start()
         return r
@@ -79,6 +78,7 @@ class SpreadMonitor(threading.Thread):
     def __init__(self,
                  api1,
                  api2,
+                 pair,
                  interval=1,
                  ):
 
@@ -86,8 +86,9 @@ class SpreadMonitor(threading.Thread):
 
         log.info('SpreadMonitor init')
 
+        self.pair = pair
         self.stop_ev = threading.Event()
-        self.interval = interval
+        self.interval = float(interval)
         self.api1 = api1
         self.cmd_q1 = queue.Queue()
         self.res_q1 = queue.Queue()
@@ -103,6 +104,7 @@ class SpreadMonitor(threading.Thread):
         self.t2.start()
 
         self.order_pool = ThreadPool(2)
+
         while True:
             try:
                 self.api1.update_balance()
@@ -120,12 +122,17 @@ class SpreadMonitor(threading.Thread):
         log.info('SpreadMonitor Tread started')
         while not self.stop_ev.is_set():
             try:
-                d1 = self.t1.get_depth()
-                d2 = self.t2.get_depth()
+                d1 = self.t1.get_depth(self.pair)
+                d2 = self.t2.get_depth(self.pair)
                 spread = depth.depth.profitable_orders(d1.get(),
                                                        d2.get(),
                                                        self.api1.fees,
-                                                       self.api2.fees)
+                                                       self.api2.fees,
+                                                       self.api1.balance_ask*0.1,
+                                                       self.api2.balance_ask*0.1,
+                                                       self.api1.balance_bid*0.1,
+                                                       self.api2.balance_bid*0.1
+                                                       )
                 log.debug(spread)
                 if 'error' in spread.keys():
                     print(spread['error'])
@@ -134,8 +141,6 @@ class SpreadMonitor(threading.Thread):
                 if spread['profitable']:
                     print(time.strftime("%H:%M:%S"), spread)
                     direction = spread['direction']
-                    vol_ask = spread['vol_ask']
-                    vol_bid = spread['vol_bid']
 
                     # alternative 1
                     if direction < 0:
@@ -145,15 +150,13 @@ class SpreadMonitor(threading.Thread):
                         api1 = self.api2
                         api2 = self.api1
 
-                    if api1.balance_bid > vol_ask and \
-                            api2.balance_ask > vol_bid:
-                        self.order_pool.map(execute_trades,
-                                            [[api2, spread['bids']],
-                                             [api1, spread['asks']]]
-                                            )
+                    self.order_pool.map(execute_trades,
+                                        [[api2, spread['bids']],
+                                         [api1, spread['asks']]]
+                                        )
 
                     #self.api1.update_balance()
                     #self.api2.update_balance()
             except queue.Empty:
                 pass
-            time.sleep(float(gv['depth_interval']))
+            time.sleep(self.interval)

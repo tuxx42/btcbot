@@ -19,7 +19,7 @@ class exsimu(ExAPI):
     def fees(self, **kwargs):
         kwargs.setdefault('pair', 'btc_eur')
         if kwargs['pair'] == 'btc_eur':
-            return 0.002
+            return self.api.fees()
         else:
             return Exception('cannot get fees')
 
@@ -53,12 +53,12 @@ class exsimu(ExAPI):
     def cancel_order(self, orderid):
         return self.api.cancel_order(orderid)
 
-    def depth(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
+    def depth(self, pair='btc_eur'):
+        #kwargs.setdefault('pair', 'btc_eur')
         try:
-            s = self.api.get_depth({'pair': kwargs['pair']})
+            s = self.api.get_depth({'pair': pair})
         except Exception as e:
             print(e)
         d = depth(**s)
-        self.curdepth[kwargs['pair']] = [d, time.time()]
+        self.curdepth[pair] = [d, time.time()]
         return d

@@ -51,8 +51,12 @@ class trade(object):
 class ask_list(list):
     def __init__(self):
         super().__init__()
+        self.total_value = 0
+        self.total_volume = 0
 
     def append(self, ask):
+        self.total_value += ask.value * ask.volume
+        self.total_volume += ask.volume
         for idx, i in enumerate(self):
             if self[idx].value == ask.value:
                 self[idx].volume += ask.volume
@@ -63,8 +67,12 @@ class ask_list(list):
 class bid_list(list):
     def __init__(self):
         super().__init__()
+        self.total_value = 0
+        self.total_volume = 0
 
     def append(self, bid):
+        self.total_value += bid.value * bid.volume
+        self.total_volume += bid.volume
         for idx, i in enumerate(self):
             if self[idx].value <= bid.value:
                 self[idx].value = bid.value
@@ -116,7 +124,16 @@ class depth(object):
         return weighted_value
 
     @staticmethod
-    def profitable_orders(depth1, depth2, cb_fees1, cb_fees2):
+    def profitable_orders(
+        depth1,
+        depth2,
+        cb_fees1,
+        cb_fees2,
+        ask_limit1,
+        ask_limit2,
+        bid_limit1,
+        bid_limit2
+    ):
         # TODO set global threshold value for profitable trades
         #      (currently 0.2)
 
@@ -145,15 +162,23 @@ class depth(object):
         maxb2 = depth2.get_max_bid()
         log.debug('min ask 2: %s, max bid 2: %s', mina2, maxb2)
 
+        # asks: market sells btc for cur
+        # bids: market buys btc for cur
         if mina1 < maxb2:
             ask_depth = depth1.asks
             bid_depth = depth2.bids
+            # we need to buy from 1 therefore money needs to be limited
+            ask_limit = ask_limit1
+            # we need to sell btc on 2 therefore btc needs to be limited
+            bid_limit = bid_limit2
             cb_ask_fees = cb_fees1
             cb_bid_fees = cb_fees2
             res['direction'] = 1
         elif mina2 < maxb1:
             ask_depth = depth2.asks
             bid_depth = depth1.bids
+            ask_limit = ask_limit2
+            bid_limit = bid_limit1
             cb_ask_fees = cb_fees2
             cb_bid_fees = cb_fees1
             res['direction'] = -1
@@ -162,6 +187,8 @@ class depth(object):
 
         log.debug("ask_depth: %s", ask_depth)
         log.debug("bid_depth: %s", bid_depth)
+        log.debug("ask limit: %f", ask_limit)
+        log.debug("bid limit: %f", bid_limit)
         # what we want to buy
         our_ask = ask_list()
         # what we want to sell
@@ -181,18 +208,49 @@ class depth(object):
                     if ask.volume < bid.volume:
                         log.debug('reducing %s by vol %f', bid, ask.volume)
                         bid_depth[idxb].volume -= ask.volume
+
+                        # check if volume exceeds limit
+                        if ask.volume > bid_limit:
+                            log.warning('BTC limit exceeded %.8f left, need %.8f',
+                                        bid_limit, ask.volume)
+                            ask.volume = bid_limit
+                            log.debug('reducing to vol %f', bid.volume)
+                            done = True
+
+                        # how much money we need to spend
+                        ask_total = ask.value * ask.volume
+
+                        # check if value exceeds limit
+                        if ask_total > ask_limit:
+                            log.warning('Money limit exceeded %.8f left, need %.8f',
+                                        ask_limit, ask_total)
+                            ask.volume = ask_limit / ask.value
+                            log.debug('reducing to vol %.8f', ask.volume)
+                            done = True
+
                         profit = bid.value * ask.volume - \
                             ask.value * ask.volume
+
                         fees_bid = bid.value * ask.volume * cb_bid_fees()
                         fees_ask = ask.value * ask.volume * cb_ask_fees()
                         fees = fees_bid + fees_ask
+
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
+
                         # TODO sum volumes for same prices
                         if profit - fees > 0:
+                            # we buy btc -> we need money
+                            # reduce remaining money
+                            ask_limit -= ask.value * ask.volume
+                            log.info('Money Left %.8f', ask_limit)
                             our_bid.append(trade(ask.value,
                                                  ask.volume, typ=trade.BID))
                             log.debug('appending to our_bid %s', our_bid[-1])
+                            # we sell btc -> we need btc
+                            # reduce remaining btc
+                            bid_limit -= ask.volume
+                            log.info('btc Left %.8f', bid_limit)
                             our_ask.append(trade(bid.value,
                                                  ask.volume, typ=trade.ASK))
                             log.debug('appending to our_ask %s', our_ask[-1])
@@ -205,18 +263,47 @@ class depth(object):
                     elif ask.volume >= bid.volume:
                         log.debug('reducing %s by vol %f', ask, bid.volume)
                         ask.volume -= bid.volume
+
+                        # check if volume exceeds limit
+                        if bid.volume > bid_limit:
+                            log.warning('BTC limit exceeded %.8f left, need %.8f',
+                                        bid_limit, bid.volume)
+                            bid.volume = bid_limit
+                            log.debug('reducing to vol %f', bid.volume)
+                            done = True
+
+                        # how much money we need to spend
+                        ask_total = ask.value * bid.volume
+
+                        # check if value exceeds limit
+                        if ask_total > ask_limit:
+                            log.warning('Money limit exceeded %.8f left, need %.8f',
+                                        ask_limit, ask_total)
+                            bid.volume = ask_limit / ask.value
+                            log.debug('reducing to vol %.8f', bid.volume)
+                            done = True
+
                         profit = bid.value * bid.volume - \
                             ask.value * bid.volume
+
                         fees_bid = bid.value * bid.volume * cb_bid_fees()
                         fees_ask = ask.value * bid.volume * cb_ask_fees()
                         fees = fees_bid + fees_ask
+
                         log.debug('profit: %f, fees: %f, diff: %f',
                                   profit, fees, profit - fees)
                         # TODO sum volumes or same prices
                         if profit - fees > 0:
+
+                            # Need to spend money
+                            ask_limit -= ask.value * bid.volume
+                            log.info('Money Left %.8f', ask_limit)
                             our_bid.append(trade(ask.value,
                                                  bid.volume, typ=trade.BID))
                             log.debug('appending to our_bid %s', our_bid[-1])
+                            # Need to spend btc
+                            bid_limit -= bid.volume
+                            log.info('btc Left %.8f', bid_limit)
                             our_ask.append(trade(bid.value,
                                                  bid.volume, typ=trade.ASK))
                             log.debug('appending to our_ask %s', our_ask[-1])
@@ -241,34 +328,22 @@ class depth(object):
             res['bids'] = our_bid
             res['total_profit'] = round(total_profit, 3)
             #assert(len(our_ask) > 0 and len(our_bid) > 0)
-            ask_volume = 0.0
-            ask_price_avg = 0.0
-            bid_volume = 0.0
-            bid_price_avg = 0.0
-            bid_value = 0.0
-            for i in our_ask:
-                ask_volume += i.volume
-                ask_price_avg += i.value * i.volume
-            ask_price_avg = round(ask_price_avg, 8)
 
-            for i in our_bid:
-                bid_volume += i.volume
-                bid_price_avg += i.value * i.volume
-            bid_price_avg = round(bid_price_avg, 8)
-
-            for i in our_bid:
-                bid_value += i.value * i.volume
+            ask_price_avg = round(our_ask.total_value, 8)
+            bid_price_avg = round(our_bid.total_value, 8)
+            ask_volume = round(our_bid.total_volume, 8)
+            bid_volume = round(our_ask.total_volume, 8)
 
             if ask_price_avg < bid_price_avg:
                 log.error("DEPTH ERROR: our_ask_price: %f, our_bid_price: %f",
                           ask_price_avg, bid_price_avg)
                 res['error'] = "average ask price is not larger than bid price"
 
-            if ask_volume < 0:
+            if ask_volume <= 0:
                 log.error("DEPTH ERROR: ask_volume is negative", ask_volume)
                 res['error'] = "ask_volume is negative"
 
-            if bid_volume < 0:
+            if bid_volume <= 0:
                 log.error("DEPTH ERROR: bid_volume is negative", bid_volume)
                 res['error'] = "bid_volume is negative"
 
@@ -277,15 +352,25 @@ class depth(object):
                           ask_volume, bid_volume)
                 res['error'] = "ask and bid volume not equivalent"
 
-            if total_profit < 0:
+            if total_profit <= 0:
                 log.error("DEPTH ERROR: total_profit is negative %f",
                           total_profit)
                 res['error'] = "total profit is negative"
 
+            if our_ask.total_volume <= 0:
+                log.error("DEPTH ERROR: trade_vol is negative %f",
+                          our_ask.total_volume)
+                res['error'] = "trade_vol is negative"
+
+            if our_bid.total_value <= 0:
+                log.error("DEPTH ERROR: bid_value is negative %f",
+                          our_bid.total_value)
+                res['error'] = "bid_value is negative"
+
             # res['vol_ask'] is btc vol
-            res['vol_ask'] = round(ask_volume, 8)
+            res['trade_vol'] = round(our_ask.total_volume, 8)
             # res['vol_bid'] is eur vol
-            res['vol_bid'] = bid_value
+            res['bid_value'] = round(our_bid.total_value, 2)
             res['pair'] = gv['pair']
 
         return res
