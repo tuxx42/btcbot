@@ -1,5 +1,7 @@
 import threading
 from depth import trade
+import logging
+log = logging.getLogger(__name__)
 
 
 class ExAPI(object):
@@ -15,21 +17,25 @@ class ExAPI(object):
         self.balance_bid = 0.0
         self.balance_ask = 0.0
 
-    def execute(self, order):
+    def execute(self, order, pair):
         if order.typ == trade.BID:
-            self.add_order('buy', order.value, order.volume)
             order_type = "buy "
         elif order.typ == trade.ASK:
-            self.add_order('sell', order.value, order.volume)
             order_type = "sell"
 
+        self.add_order(order=order_type,
+                       price=order.value,
+                       vol=order.volume,
+                       pair=pair)
+        log.debug("[%s] %s vol=%f val=%f",
+                  self.name, order_type, order.volume, order.value)
         print("[%s] %s vol=%f val=%f" %
               (self.name, order_type, order.volume, order.value))
 
     def update_balance(self):
-        balance = self.get_balance()
-        self.balance_bid = balance['btc']
-        self.balance_ask = balance['eur']
+        self.balance = self.get_balance()
+        self.balance_bid = self.balance['btc']
+        self.balance_ask = self.balance['eur']
 
     #def cipher_key(self, dummy=None):
     #    pass

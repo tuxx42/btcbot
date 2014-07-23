@@ -25,20 +25,33 @@ class kraken(ExAPI):
             secret=key_mgmt.secret,
         )
         self.balance = self.get_balance()
+        self.fee_table = {}
         if name:
             self.name = name
         else:
             self.name = "kraken"
 
-    def fees(self, **kwargs):
-        kwargs.setdefault('pair', 'btc_eur')
-        fees = {}
-        fees['btc_eur'] = 0.002
-        fees['btc_usd'] = 0.002
+    def fees(self, pair="btc_eur"):
+        if not pair in self.fee_table.keys():
+            self.update_fees(pair)
+        return self.fee_table[pair]
+
+    def update_fees(self, pair='btc_eur'):
         try:
-            return fees[kwargs['pair']]
+            res = self.api.query_private('TradeVolume',
+                                         {'pair': self.pairs[pair]})
+        except Exception as e:
+            print(e)
+            raise Exception('unable to get fee')
+        if res['error']:
+            raise Exception(res['error'])
+        else:
+            res = res['result']['fees']
+        try:
+            self.fee_table[pair] = float(res[self.pairs[pair]]['fee']) / 100.0
+            return self.fee_table[pair]
         except KeyError:
-            raise Exception('invalid pair')
+            raise Exception('unable to get fee')
 
     def get_balance(self):
         s = self.api.query_private('Balance')
@@ -54,30 +67,37 @@ class kraken(ExAPI):
             return self.balance
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
-        print('executing trade order: %s, value: %f, volume: %f, type: %s' %
-              (order, price, vol, ordertype))
+        getpair = self.pairs[pair]
+        print('executing trade order: %s, value: %f, '
+              'volume: %f, type: %s, pair: %s' %
+              (order, price, vol, ordertype, getpair))
 
         return 'blocked'
-        getpair = self.pairs[pair]
         try:
-            res = self.kraken.query_private('AddOrder',
-                                            {'pair': getpair,
-                                             'type': order,
-                                             'ordertype': ordertype,
-                                             'price': price,
-                                             'volume': vol,
-                                             })
+            res = self.api.query_private('AddOrder',
+                                         {'pair': getpair,
+                                          'type': order,
+                                          'ordertype': ordertype,
+                                          'price': price,
+                                          'volume': vol,
+                                          })
         except Exception as e:
+            log.error('[%s] exception occured %s, %s',
+                      self.name, e, res)
             print(e)
             raise Exception('could not issue order')
         if res['error']:
+            log.error('[%s] returned erroneous result %s',
+                      self.name, res)
             raise Exception(res['error'])
         else:
+            log.debug('[%s] trade successful %s',
+                      self.name, res)
             return res
 
     def trades(self, **kwargs):
         try:
-            s = self.kraken.query_public('Trades', kwargs)
+            s = self.api.query_public('Trades', kwargs)
         except:
             print ("unable to get trades")
             raise Exception
@@ -87,22 +107,26 @@ class kraken(ExAPI):
         print(s['result'])
 
     def active_orders(self):
-        res = self.kraken.query_private('OpenOrders')
+        res = self.api.query_private('OpenOrders')
         return res
 
     def closed_orders(self):
-        res = self.kraken.query_private('ClosedOrders')
+        res = self.api.query_private('ClosedOrders')
         return res
 
     def query_order(self, order_id):
-        res = self.kraken.query_private('QueryOrders',
-                                        {'txid': order_id})
+        res = self.api.query_private('QueryOrders',
+                                     {'txid': order_id})
         return res
 
     def cancel_order(self, orderid):
-        res = self.kraken.query_private('CancelOrder',
-                                        {'txid': orderid})
+        res = self.api.query_private('CancelOrder',
+                                     {'txid': orderid})
         return res
+
+    def get_ledgers(self, pair='btc_eur'):
+        res = self.api.query_private('TradeVolume', {'pair': self.pairs[pair]})
+        print(res)
 
     def depth(self, pair='btc_eur'):
         if 'depth_count' in gv.keys():

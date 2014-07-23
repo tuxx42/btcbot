@@ -3,13 +3,15 @@ import time
 import queue
 import depth
 import logging
+import os
 from multiprocessing.pool import ThreadPool
 log = logging.getLogger(__name__)
 
 
-def execute_trades(api, trades):
+def execute_trades(args):
+    api, trades, pair = args
     for trade in trades:
-        api.execute(trade)
+        api.execute(trade, pair)
 
 
 class AsyncResult(threading.Thread):
@@ -86,6 +88,7 @@ class SpreadMonitor(threading.Thread):
 
         log.info('SpreadMonitor init')
 
+        self.total_balance = {}
         self.pair = pair
         self.stop_ev = threading.Event()
         self.interval = float(interval)
@@ -104,16 +107,25 @@ class SpreadMonitor(threading.Thread):
         self.t2.start()
 
         self.order_pool = ThreadPool(2)
+        balance = self.api1.get_balance()
+        self.total_balance['eur'] = balance['eur']
+        self.total_balance['btc'] = balance['btc']
+        print(api1.name, repr(balance))
+        balance = self.api2.get_balance()
+        print(api2.name, repr(balance))
+        self.total_balance['eur'] += balance['eur']
+        self.total_balance['btc'] += balance['btc']
+        print('total', repr(self.total_balance))
 
-        while True:
-            try:
-                self.api1.update_balance()
-                self.api2.update_balance()
-                return None
-            except Exception as e:
-                time.sleep(5)
-                log.debug(e)
-                print(e)
+        #while True:
+        #    try:
+        #        self.api1.update_balance()
+        #        self.api2.update_balance()
+        #        return None
+        #    except Exception as e:
+        #        time.sleep(5)
+        #        log.debug(e)
+        #        print(e)
 
     def stop(self):
         self.stop_ev.set()
@@ -129,11 +141,16 @@ class SpreadMonitor(threading.Thread):
                     d2.get(),
                     self.api1.fees,
                     self.api2.fees,
-                    self.api1.balance_ask * 0.1,
-                    self.api2.balance_ask * 0.1,
-                    self.api1.balance_bid * 0.1,
-                    self.api2.balance_bid * 0.1
+                    #12,
+                    #12,
+                    #0.02,
+                    #0.02
+                    self.api1.balance['eur'],
+                    self.api2.balance['eur'],
+                    self.api1.balance['btc'],
+                    self.api2.balance['btc']
                 )
+
                 log.debug(spread)
                 if 'error' in spread.keys():
                     print(spread['error'])
@@ -151,12 +168,27 @@ class SpreadMonitor(threading.Thread):
                         api1 = self.api2
                         api2 = self.api1
 
-                    return self.order_pool.map(execute_trades,
-                                               [[api2, spread['bids']],
-                                                [api1, spread['asks']]]
-                                               )
-                    #self.api1.update_balance()
-                    #self.api2.update_balance()
+                    self.order_pool.map(execute_trades,
+                                        [[api2,
+                                          spread['bids'],
+                                          spread['pair']],
+                                         [api1,
+                                          spread['asks'],
+                                          spread['pair']]]
+                                        )
+                    os.system('beep -f 480 -l 400')
+                    balance = self.api1.get_balance()
+                    self.total_balance['eur'] -= balance['eur']
+                    self.total_balance['btc'] -= balance['btc']
+                    print(api1.name, repr(balance))
+                    balance = self.api2.get_balance()
+                    self.total_balance['eur'] -= balance['eur']
+                    self.total_balance['btc'] = round(
+                        self.total_balance['btc'] - balance['btc'], 8
+                    )
+                    print(api2.name, repr(balance))
+                    print('total', repr(self.total_balance))
+                    break
             except queue.Empty:
                 pass
             time.sleep(self.interval)

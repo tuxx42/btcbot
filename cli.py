@@ -147,6 +147,9 @@ class cmd_completer(cmd.Cmd):
             print(e)
             return
         global gv
+        if not d:
+            self.do_show_globals('')
+            return
         gv.update(d)
         self.config['global_vars'] = gv
         if "prompt" in gv.keys():

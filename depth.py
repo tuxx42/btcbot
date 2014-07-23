@@ -370,8 +370,10 @@ class depth(object):
             # res['vol_ask'] is btc vol
             res['trade_vol'] = round(our_ask.total_volume, 8)
             # res['vol_bid'] is eur vol
-            res['bid_value'] = round(our_bid.total_value, 2)
             res['pair'] = gv['pair']
+            res['ask_total_value'] = our_ask.total_value
+            res['bid_total_value'] = our_bid.total_value
+            res['profitability_ratio'] = round(total_profit / our_ask.total_value * 100.0, 4)
 
         return res
 

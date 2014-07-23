@@ -20,7 +20,6 @@ class btce(ExAPI):
         self.api = modules.btceapi.API(
             key_mgmt.key,
             key_mgmt.secret)
-        self.balance = self.get_balance()
         if name:
             self.name = name
         else:
@@ -50,21 +49,23 @@ class btce(ExAPI):
             print(e)
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
-        print('executing trade order: %s, value: %f, volume: %f, type: %s' %
-              (order, price, vol, ordertype))
+        print(ordertype)
+        print('executing trade order: %s, value: %f, volume: %f, type: %s, pair: %s' %
+              (order, price, vol, ordertype, pair))
         return 'blocked'
         try:
-            result = self.api.Trade(tpair=pair,
-                                    ttype=order,
-                                    trate=price,
-                                    tamount=vol)
-            return result
+            res = self.api.Trade(tpair=pair,
+                                 ttype=order,
+                                 trate=price,
+                                 tamount=vol)
+            log.debug('[%s] trade successful %s',
+                self.name, res)
+            return res
         except Exception as e:
+            log.debug('[%s] exception occured %s, %s',
+                      self.name, e, res)
             print(e)
             raise Exception('could not issue order')
-        if result['success']:
-            #self.issued_orders.append(result['return']['order_id'])
-            return result['return']
 
     def trades(self, **kwargs):
         pass
