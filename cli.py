@@ -95,8 +95,6 @@ class cmd_completer(cmd.Cmd):
         start the depth monitor"""
         api1 = gv['api1']
         api2 = gv['api2']
-        cur_limit = gv['cur_limit']
-        btc_limit = gv['btc_limit']
         s = ('starting depth monitor between "%s" and "%s"' % (api1, api2))
         sm = depth_monitor.SpreadMonitor(
             markets[api1],

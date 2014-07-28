@@ -124,15 +124,16 @@ class SpreadMonitor(threading.Thread):
             try:
                 d1 = self.t1.get_depth(self.pair)
                 d2 = self.t2.get_depth(self.pair)
-                spread = depth.depth.profitable_orders(d1.get(),
-                                                       d2.get(),
-                                                       self.api1.fees,
-                                                       self.api2.fees,
-                                                       self.api1.balance_ask*0.1,
-                                                       self.api2.balance_ask*0.1,
-                                                       self.api1.balance_bid*0.1,
-                                                       self.api2.balance_bid*0.1
-                                                       )
+                spread = depth.depth.profitable_orders(
+                    d1.get(),
+                    d2.get(),
+                    self.api1.fees,
+                    self.api2.fees,
+                    self.api1.balance_ask * 0.1,
+                    self.api2.balance_ask * 0.1,
+                    self.api1.balance_bid * 0.1,
+                    self.api2.balance_bid * 0.1
+                )
                 log.debug(spread)
                 if 'error' in spread.keys():
                     print(spread['error'])
@@ -150,11 +151,10 @@ class SpreadMonitor(threading.Thread):
                         api1 = self.api2
                         api2 = self.api1
 
-                    self.order_pool.map(execute_trades,
-                                        [[api2, spread['bids']],
-                                         [api1, spread['asks']]]
-                                        )
-
+                    return self.order_pool.map(execute_trades,
+                                               [[api2, spread['bids']],
+                                                [api1, spread['asks']]]
+                                               )
                     #self.api1.update_balance()
                     #self.api2.update_balance()
             except queue.Empty:

@@ -1,3 +1,4 @@
 kraken.enc
 *.pyc
 modules/exsimuapi/*.ini
+btce.enc
