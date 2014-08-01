@@ -19,7 +19,7 @@ class ExAPI(object):
 
     def execute(self, order, pair):
         if order.typ == trade.BID:
-            order_type = "buy "
+            order_type = "buy"
         elif order.typ == trade.ASK:
             order_type = "sell"
 

@@ -71,7 +71,6 @@ class kraken(ExAPI):
         print('executing trade order: %s, value: %f, '
               'volume: %f, type: %s, pair: %s' %
               (order, price, vol, ordertype, getpair))
-
         return 'blocked'
         try:
             res = self.api.query_private('AddOrder',
@@ -79,7 +78,7 @@ class kraken(ExAPI):
                                           'type': order,
                                           'ordertype': ordertype,
                                           'price': price,
-                                          'volume': vol,
+                                          'volume': round(vol, 8),
                                           })
         except Exception as e:
             log.error('[%s] exception occured %s, %s',

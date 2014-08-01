@@ -49,17 +49,17 @@ class btce(ExAPI):
             print(e)
 
     def add_order(self, order, price, vol, ordertype='limit', pair='btc_eur'):
-        print(ordertype)
         print('executing trade order: %s, value: %f, volume: %f, type: %s, pair: %s' %
               (order, price, vol, ordertype, pair))
         return 'blocked'
         try:
+            print('self.api.Trade(tpair=%s, ttype=%s, trate=%s, tamount=%s' %
+                  (pair, order, price, vol))
             res = self.api.Trade(tpair=pair,
                                  ttype=order,
                                  trate=price,
-                                 tamount=vol)
-            log.debug('[%s] trade successful %s',
-                self.name, res)
+                                 tamount=round(vol, 8))
+            log.debug('[%s] trade successful %s', self.name, res)
             return res
         except Exception as e:
             log.debug('[%s] exception occured %s, %s',
