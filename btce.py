@@ -4,6 +4,7 @@ import time
 from exapi import ExAPI
 from depth import depth
 from global_vars import gv
+from depth import trade
 
 import logging
 log = logging.getLogger(__name__)
@@ -15,6 +16,8 @@ class btce(ExAPI):
     curdepth = {}
     #issued_orders = []
     name = 'btce'
+    pairs = {}
+    #pairs['ltc_btc'] = 'btc_ltc'
 
     def __init__(self, key_mgmt, name=None):
         self.api = modules.btceapi.API(
@@ -76,11 +79,16 @@ class btce(ExAPI):
         else:
             count = 20
         try:
+            if pair == 'btc_ltc':
+                pair = 'ltc_btc'
             s = self.api.get_param(pair, 'depth')
         except Exception as e:
             log.exception(e)
             raise Exception('could not get depth')
         d = depth(**s)
+        if pair == 'ltc_btc':
+            d.asks = list(map(lambda t: trade(1 / t.value, t.volume), d.asks))
+            d.bids = list(map(lambda t: trade(1 / t.value, t.volume), d.bids))
         d.asks = d.asks[:count]
         d.bids = d.bids[-count:]
         btce.curdepth[pair] = [d, time.time()]

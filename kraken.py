@@ -14,8 +14,40 @@ class kraken(ExAPI):
     curdepth = {}
     pairs = {}
     name = 'kraken'
+
+    pairs['eur_xdg'] = 'ZEURXXDG'
+    pairs['eur_xrp'] = 'ZEURXXRP'
+    pairs['eur_xvn'] = 'ZEURXXVN'
+
+    pairs['usd_xdg'] = 'ZUSDXXDG'
+    pairs['usd_xrp'] = 'ZUSDXXRP'
+    pairs['usd_xvn'] = 'ZUSDXXVN'
+
+    pairs['krw_xrp'] = 'ZKRWXXRP'
+
     pairs['btc_eur'] = 'XXBTZEUR'
     pairs['btc_usd'] = 'XXBTZUSD'
+    pairs['btc_krw'] = 'XXBTZKRW'
+    pairs['btc_ltc'] = 'XXBTXLTC'
+    pairs['btc_nmc'] = 'XXBTXNMC'
+    pairs['btc_xdg'] = 'XXBTXXDG'
+    pairs['btc_xrp'] = 'XXBTXXRP'
+    pairs['btc_xvn'] = 'XXBTXXVN'
+
+    pairs['ltc_eur'] = 'XLTCZEUR'
+    pairs['ltc_usd'] = 'XLTCZUSD'
+    pairs['ltc_krw'] = 'XLTCZKRW'
+    pairs['ltc_xdg'] = 'XLTCXXDG'
+    pairs['ltc_xrp'] = 'XLTCXXRP'
+
+    pairs['nmc_eur'] = 'XNMCZEUR'
+    pairs['nmc_usd'] = 'XNMCZUSD'
+    pairs['nmc_krw'] = 'XNMCZKRW'
+    pairs['nmc_xdg'] = 'XNMCXXDG'
+    pairs['nmc_xrp'] = 'XNMCXXRP'
+
+    pairs['xvn_xrp'] = 'XXVNXXRP'
+
     pairs['btc'] = 'XXBT'
     pairs['eur'] = 'ZEUR'
 
@@ -71,7 +103,7 @@ class kraken(ExAPI):
         print('executing trade order: %s, value: %f, '
               'volume: %f, type: %s, pair: %s' %
               (order, price, vol, ordertype, getpair))
-        return 'blocked'
+        return ''
         try:
             res = self.api.query_private('AddOrder',
                                          {'pair': getpair,
@@ -132,6 +164,9 @@ class kraken(ExAPI):
             count = int(gv['depth_count'])
         else:
             count = 20
+
+        if not pair in self.pairs.keys():
+            raise Exception('invalid pair', pair)
 
         try:
             s = self.api.query_public('Depth', {'pair': self.pairs[pair],
