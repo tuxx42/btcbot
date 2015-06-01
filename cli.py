@@ -27,20 +27,20 @@ version = "0.1 beta"
 prompt = "(Cmd)"
 histfile = "/tmp/history"
 
-key_mgmt_kraken = KeyMgmt.from_file(
-    'kraken.enc',
-    password='foobox',
-    padding=kraken.kraken.PADDING
-)
-
-key_mgmt_btce = KeyMgmt.from_file(
-    'btce.enc',
-    password='foobar',
-    padding=kraken.kraken.PADDING
-)
+#key_mgmt_kraken = KeyMgmt.from_file(
+#    'kraken.enc',
+#    password='foobox',
+#    padding=kraken.kraken.PADDING
+#)
+#
+#key_mgmt_btce = KeyMgmt.from_file(
+#    'btce.enc',
+#    password='foobar',
+#    padding=kraken.kraken.PADDING
+#)
 markets = {
-    'kraken': kraken.kraken(key_mgmt_kraken),
-    'btce': btce.btce(key_mgmt_btce),
+#    'kraken': kraken.kraken(key_mgmt_kraken),
+#    'btce': btce.btce(key_mgmt_btce),
     'exsimu1': exsimu.exsimu('data1', 'exsimu1'),
     'exsimu2': exsimu.exsimu('data2', 'exsimu2'),
 }
